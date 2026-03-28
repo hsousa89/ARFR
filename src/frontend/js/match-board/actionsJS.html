@@ -59,7 +59,7 @@
     };
 
     // ==========================================
-    // WHATSAPP EXPORT LOGIC (Classic Strings)
+    // WHATSAPP EXPORT LOGIC
     // ==========================================
 
     window.formatMatchDatePT = (dateString) => {
@@ -90,7 +90,8 @@
         const match = window.currentActiveMatch;
         if (!match) return;
 
-        let text = '⚽ Futebol Rodovia Amigos e Resenha ⚽\n🗓️ ' + window.formatMatchDatePT(match.date) + '\n\n';
+        // \u26BD = ⚽ | \uD83D\uDDD3\uFE0F = 🗓️
+        let text = '\u26BD Futebol Rodovia Amigos e Resenha \u26BD\n\uD83D\uDDD3\uFE0F ' + window.formatMatchDatePT(match.date) + '\n\n';
 
         match.participants.forEach((p, i) => {
             const allPlayers = window.APP_DATA.players || [];
@@ -105,7 +106,8 @@
         const match = window.currentActiveMatch;
         if (!match) return;
 
-        let text = '⚽ Futebol Rodovia Amigos e Resenha ⚽\n🗓️ ' + window.formatMatchDatePT(match.date) + '\n\n';
+        // \u26BD = ⚽ | \uD83D\uDDD3\uFE0F = 🗓️
+        let text = '\u26BD Futebol Rodovia Amigos e Resenha \u26BD\n\uD83D\uDDD3\uFE0F ' + window.formatMatchDatePT(match.date) + '\n\n';
 
         const allPlayers = window.APP_DATA.players || [];
         const getPlayerName = (p) => {
@@ -137,8 +139,9 @@
             return res + '\n';
         };
 
-        text += formatTeam(teamA, 'Vermelho', '🔴');
-        text += formatTeam(teamB, 'Roxo', '🟣');
+        // \uD83D\uDD34 = 🔴 | \uD83D\uDFE3 = 🟣
+        text += formatTeam(teamA, 'Vermelho', '\uD83D\uDD34');
+        text += formatTeam(teamB, 'Roxo', '\uD83D\uDFE3');
 
         window.copyAndOpenWhatsApp(text.trim());
     };
