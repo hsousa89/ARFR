@@ -1,52 +1,76 @@
 <div
-    class="relative flex h-auto min-h-screen w-64 flex-col bg-surface dark group/design-root overflow-x-hidden shrink-0 border-r border-slate-800">
+    class="md:hidden fixed top-0 left-0 right-0 bg-surface border-b border-slate-800 z-30 flex items-center justify-between p-4 shadow-md">
+    <div class="flex items-center gap-3">
+        <img src="https://raw.githubusercontent.com/hsousa89/ARFR/7145beca9a2573540d1577277799293e8e429db1/assets/ARFR-removebg.png"
+            alt="ARFR Logo" class="w-8 h-auto drop-shadow-md">
+        <span class="text-white font-display text-xl tracking-wider">ARFR</span>
+    </div>
+    <button onclick="window.toggleSidebar()" class="text-slate-400 hover:text-white transition-colors">
+        <span class="material-symbols-outlined text-3xl">menu</span>
+    </button>
+</div>
+
+<div id="sidebar-overlay" onclick="window.toggleSidebar()"
+    class="fixed inset-0 bg-black/80 z-40 hidden md:hidden transition-opacity duration-300 opacity-0"></div>
+
+<div id="app-sidebar"
+    class="fixed inset-y-0 left-0 z-50 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out flex h-full min-h-screen w-64 flex-col bg-surface dark group/design-root overflow-x-hidden shrink-0 border-r border-slate-800 shadow-2xl md:shadow-none">
+
+    <button onclick="window.toggleSidebar()"
+        class="md:hidden absolute top-4 right-4 text-slate-500 hover:text-white transition-colors z-50">
+        <span class="material-symbols-outlined text-2xl">close</span>
+    </button>
+
     <div class="layout-container flex h-full grow flex-col">
         <div class="flex flex-col h-full justify-between p-4">
             <div class="flex flex-col gap-8">
-                <div class="flex flex-col border-b border-slate-800 pb-6">
+
+                <div class="flex flex-col border-b border-slate-800 pb-6 mt-6 md:mt-0">
                     <a href="#dashboard"
-                        class="flex flex-col items-center text-center border-b border-slate-800 pb-6 group hover:opacity-90 transition-all cursor-pointer">
+                        class="flex flex-col items-center text-center group hover:opacity-90 transition-all cursor-pointer">
                         <img src="https://raw.githubusercontent.com/hsousa89/ARFR/7145beca9a2573540d1577277799293e8e429db1/assets/ARFR-removebg.png"
                             alt="ARFR Logo"
                             class="w-20 h-auto mb-4 drop-shadow-lg group-hover:scale-105 transition-transform duration-300">
-
                         <h1 class="text-white text-3xl font-display leading-tight tracking-wider">ARFR</h1>
                     </a>
-                    <p class="text-primary text-sm font-body uppercase tracking-widest font-semibold">Futebol de Domingo
-                    </p>
+                    <p class="text-primary text-sm font-body uppercase tracking-widest font-semibold text-center mt-2">
+                        Futebol de Domingo</p>
                 </div>
+
                 <nav class="flex flex-col gap-2">
-                    <a class="flex items-center gap-3 px-3 py-3 bg-primary text-background-dark transition-all hover:-translate-y-[2px] hover:shadow-hard"
+                    <a class="flex items-center gap-3 px-3 py-3 bg-primary text-background-dark transition-all hover:-translate-y-[2px] hover:shadow-hard rounded md:rounded-none"
                         href="#dashboard">
                         <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">house</span>
                         <span class="text-sm font-bold uppercase tracking-wider">Painel</span>
                     </a>
-                    <a class="flex items-center gap-3 px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800"
+                    <a class="flex items-center gap-3 px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800 rounded md:rounded-none"
                         href="#roster">
-                        <span class="material-symbols-outlined">user_attributes</span>
+                        <span class="material-symbols-outlined">groups</span>
                         <span class="text-sm font-bold uppercase tracking-wider">Plantel</span>
                     </a>
-                    <a class="flex items-center gap-3 px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800"
+                    <a class="flex items-center gap-3 px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800 rounded md:rounded-none"
                         href="#matches">
-                        <span class="material-symbols-outlined">calendar_today</span>
-                        <span class="text-sm font-bold uppercase tracking-wider">Centro de Jogos</span>
+                        <span class="material-symbols-outlined">sports_soccer</span>
+                        <span class="text-sm font-bold uppercase tracking-wider">Jogos</span>
                     </a>
-                    <a class="flex items-center gap-3 px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800"
+                    <a class="flex items-center gap-3 px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800 rounded md:rounded-none"
                         href="#treasury">
-                        <span class="material-symbols-outlined">payments</span>
+                        <span class="material-symbols-outlined">account_balance_wallet</span>
                         <span class="text-sm font-bold uppercase tracking-wider">Tesouraria</span>
                     </a>
-                    <a href="#inventory"
-                        class="flex items-center gap-3 px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800">
+                    <a class="flex items-center gap-3 px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800 rounded md:rounded-none"
+                        href="#inventory">
                         <span class="material-symbols-outlined group-hover:text-primary transition-colors"
                             style="font-variation-settings: 'FILL' 0">inventory_2</span>
                         <span class="text-sm font-bold uppercase tracking-wider">Inventário</span>
                     </a>
                 </nav>
             </div>
+
             <div class="flex items-center gap-3 pt-6 border-t border-slate-800">
-                <div class="w-10 h-10 bg-slate-800 flex items-center justify-center text-primary font-display text-xl">M
-                </div>
+                <div
+                    class="w-10 h-10 bg-slate-800 flex items-center justify-center text-primary font-display text-xl rounded-full">
+                    M</div>
                 <div class="cursor-pointer group flex items-center gap-4" onclick="openAdminModal()">
                     <div
                         class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 group-hover:border-primary transition-colors flex items-center justify-center">
@@ -62,3 +86,47 @@
         </div>
     </div>
 </div>
+
+<style>
+    @media (max-width: 768px) {
+
+        /* Ensure the main content isn't hidden underneath the new Mobile Top Bar */
+        #app-root {
+            padding-top: 5.5rem !important;
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+    }
+</style>
+
+<script>
+    // Handles the sliding animation and dark overlay
+    window.toggleSidebar = () => {
+        const sidebar = document.getElementById('app-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        if (sidebar.classList.contains('-translate-x-full')) {
+            // Open Sidebar
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+        } else {
+            // Close Sidebar
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('opacity-0');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+    };
+
+    // Automatically close the sidebar when the user taps a link on mobile
+    setTimeout(() => {
+        const links = document.querySelectorAll('#app-sidebar nav a');
+        links.forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth < 768) {
+                    window.toggleSidebar();
+                }
+            });
+        });
+    }, 100);
+</script>
