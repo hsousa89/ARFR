@@ -3,9 +3,10 @@
 
     // 1. POSITION COLOR UTILITY (Use this everywhere!)
     window.getPositionStyle = (pos) => {
-        switch (pos) {
+        const cleanPos = pos.trim().toUpperCase();
+        switch (cleanPos) {
             case 'GR': return 'bg-amber-500/20 text-amber-500 border-amber-500/30';
-            case 'DC': case 'LD': case 'LE': return 'bg-blue-500/20 text-blue-500 border-blue-500/30';
+            case 'DC': case 'LD': case 'LE': case 'DEF': return 'bg-blue-500/20 text-blue-500 border-blue-500/30';
             case 'MED': return 'bg-green-500/20 text-green-500 border-green-500/30';
             case 'AT': case 'AV': return 'bg-red-500/20 text-red-500 border-red-500/30';
             default: return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
@@ -75,8 +76,8 @@
 
             // Photo or Fallback
             const photoEl = player.photo && player.photo.trim() !== ''
-                ? `<img src="${player.photo}" alt="${player.name}" class="w-16 h-16 rounded-full object-cover border-2 border-slate-700">`
-                : `<div class="w-16 h-16 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-xl font-display text-slate-400">${player.name.charAt(0).toUpperCase()}</div>`;
+                ? `<img src="${player.photo}" alt="${player.name}" loading="lazy" decoding="async" class="w-16 h-16 rounded-full object-cover border-2 border-slate-700 shadow-sm">`
+                : `<div class="w-16 h-16 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-xl font-display text-slate-400 shadow-sm">${player.name.charAt(0).toUpperCase()}</div>`;
 
             rosterHTML += `
             <div onclick="window.navigateToPlayerDetails('${player.id}')" class="bg-surface border border-slate-800 p-6 relative overflow-hidden group hover:border-primary/50 cursor-pointer transition-all ${opacityClass} flex flex-col gap-4 shadow-lg">
@@ -110,18 +111,22 @@
         rosterGrid.innerHTML = rosterHTML;
     };
 
+    // Placeholder for Phase 3
+    window.navigateToPlayerDetails = (playerId) => {
+        alert("Navegar para os detalhes do jogador: " + playerId + "\n(Criaremos esta view no próximo passo!)");
+    };
 
-    // Needs to be globally accessible
     window.openPlayerModal = (playerId = null) => {
         const form = document.getElementById('form-player');
         form.reset();
 
         document.getElementById('modal-player-title').innerText = playerId ? 'Editar Jogador' : 'Novo Jogador';
         document.getElementById('player-id').value = playerId || '';
-
-        // Default to active/true
         document.getElementById('player-status').value = 'ACTIVE';
         document.getElementById('player-enters-draft').checked = true;
+
+        // Reset all position checkboxes
+        document.querySelectorAll('.pos-checkbox').forEach(cb => cb.checked = false);
 
         if (playerId) {
             const player = window.APP_DATA.players.find(p => p.id === playerId);
@@ -130,24 +135,23 @@
                 document.getElementById('player-email').value = player.email || '';
                 document.getElementById('player-contact').value = player.contact || '';
                 document.getElementById('player-photo').value = player.photo || '';
+
+                // Check the correct position boxes
                 if (player.positions && player.positions.length > 0) {
-                    document.getElementById('player-position').value = player.positions[0];
+                    player.positions.forEach(pos => {
+                        const cb = document.querySelector(`.pos-checkbox[value="${pos}"]`);
+                        if (cb) cb.checked = true;
+                    });
                 }
 
                 document.getElementById('player-enters-draft').checked = player.entersDraft !== false;
                 document.getElementById('player-is-shift-worker').checked = player.isShiftWorker === true;
                 document.getElementById('player-is-admin').checked = player.isAdmin === true;
                 document.getElementById('player-added').value = player.addedAt || '';
-
                 document.getElementById('player-status').value = player.removedAt ? 'INACTIVE' : 'ACTIVE';
             }
         }
-
         document.getElementById('modal-player').classList.remove('hidden');
-    };
-
-    window.closePlayerModal = () => {
-        document.getElementById('modal-player').classList.add('hidden');
     };
 
     window.handleSavePlayer = (e) => {
@@ -157,13 +161,19 @@
         const isNew = !document.getElementById('player-id').value;
         const status = document.getElementById('player-status').value;
 
+        // Gather all checked positions into an array!
+        const selectedPositions = Array.from(document.querySelectorAll('.pos-checkbox:checked')).map(cb => cb.value);
+
+        // Fallback in case Mister forgets to check a box
+        if (selectedPositions.length === 0) selectedPositions.push('AT');
+
         const playerData = {
             id: playerId,
             name: document.getElementById('player-name').value.trim(),
             email: document.getElementById('player-email').value.trim(),
             contact: document.getElementById('player-contact').value.trim(),
             photo: document.getElementById('player-photo').value.trim(),
-            positions: [document.getElementById('player-position').value], // Note: App currently supports 1 primary pos from UI
+            positions: selectedPositions,
             isAdmin: document.getElementById('player-is-admin').checked,
             entersDraft: document.getElementById('player-enters-draft').checked,
             isShiftWorker: document.getElementById('player-is-shift-worker').checked,
@@ -182,9 +192,8 @@
         }
 
         window.closePlayerModal();
-        window.renderRoster(); // Re-render the roster immediately (Optimistic UI)
+        window.renderRoster();
 
-        // If you are looking at the player details screen, re-render that too!
         if (typeof window.renderPlayerDetailsView === 'function' && window.currentViewPlayerId === playerId) {
             window.renderPlayerDetailsView(playerId);
         }
@@ -197,4 +206,12 @@
             })
             .apiSavePlayer(playerData);
     };
+
+
+    window.closePlayerModal = () => {
+        document.getElementById('modal-player').classList.add('hidden');
+    };
+
+
+
 </script>
