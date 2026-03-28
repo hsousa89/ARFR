@@ -59,32 +59,30 @@
     };
 
     // ==========================================
-    // WHATSAPP EXPORT LOGIC
+    // WHATSAPP EXPORT LOGIC (Classic Strings)
     // ==========================================
 
     window.formatMatchDatePT = (dateString) => {
-        if (!dateString) return "Data Desconhecida";
+        if (!dateString) return 'Data Desconhecida';
         const d = new Date(dateString);
         const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
         const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-        return `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} ${d.getFullYear()}`;
+        return days[d.getDay()] + ', ' + d.getDate() + ' de ' + months[d.getMonth()] + ' ' + d.getFullYear();
     };
 
     window.copyAndOpenWhatsApp = (text) => {
-        // Try to copy to clipboard first
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(() => {
                 const encodedText = encodeURIComponent(text);
-                window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+                window.open('https://wa.me/?text=' + encodedText, '_blank');
             }).catch(err => {
                 console.error('Failed to copy', err);
                 const encodedText = encodeURIComponent(text);
-                window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+                window.open('https://wa.me/?text=' + encodedText, '_blank');
             });
         } else {
-            // Fallback if clipboard isn't supported by browser
             const encodedText = encodeURIComponent(text);
-            window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+            window.open('https://wa.me/?text=' + encodedText, '_blank');
         }
     };
 
@@ -92,12 +90,12 @@
         const match = window.currentActiveMatch;
         if (!match) return;
 
-        let text = `⚽ Futebol Rodovia Amigos e Resenha ⚽\n🗓️ ${window.formatMatchDatePT(match.date)}\n\n`;
+        let text = '⚽ Futebol Rodovia Amigos e Resenha ⚽\n🗓️ ' + window.formatMatchDatePT(match.date) + '\n\n';
 
         match.participants.forEach((p, i) => {
             const allPlayers = window.APP_DATA.players || [];
             const playerDb = allPlayers.find(pl => pl.id === p.playerId) || { name: 'Desconhecido' };
-            text += `${i + 1}. ${playerDb.name}\n`;
+            text += (i + 1) + '. ' + playerDb.name + '\n';
         });
 
         window.copyAndOpenWhatsApp(text);
@@ -107,7 +105,7 @@
         const match = window.currentActiveMatch;
         if (!match) return;
 
-        let text = `⚽ Futebol Rodovia Amigos e Resenha ⚽\n🗓️ ${window.formatMatchDatePT(match.date)}\n\n`;
+        let text = '⚽ Futebol Rodovia Amigos e Resenha ⚽\n🗓️ ' + window.formatMatchDatePT(match.date) + '\n\n';
 
         const allPlayers = window.APP_DATA.players || [];
         const getPlayerName = (p) => {
@@ -119,7 +117,7 @@
         const teamB = match.participants.filter(p => p.team === 'B');
 
         const formatTeam = (teamArr, teamName, icon) => {
-            let res = `${icon} ${teamName} ${icon}\n`;
+            let res = icon + ' ' + teamName + ' ' + icon + '\n';
 
             const posOrder = { 'GR': 1, 'DEF': 2, 'DC': 2, 'LD': 2, 'LE': 2, 'MED': 3, 'AV': 4, 'AT': 4 };
 
@@ -127,13 +125,13 @@
             const subs = teamArr.filter(p => !p.firstTeam).sort((a, b) => (posOrder[a.position] || 9) - (posOrder[b.position] || 9));
 
             starters.forEach((p, i) => {
-                res += `${i + 1}. ${getPlayerName(p)}\n`;
+                res += (i + 1) + '. ' + getPlayerName(p) + '\n';
             });
 
             if (subs.length > 0) {
-                res += `Sub\n`;
+                res += 'Sub\n';
                 subs.forEach((p, i) => {
-                    res += `${i + 1}. ${getPlayerName(p)}\n`;
+                    res += (i + 1) + '. ' + getPlayerName(p) + '\n';
                 });
             }
             return res + '\n';
