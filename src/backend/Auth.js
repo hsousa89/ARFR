@@ -4,8 +4,8 @@
  * @returns {boolean} True if the PIN is correct.
  */
 function apiVerifyPin(pin) {
-    // Hardcode your secret PIN here! Let's use 1904 as a placeholder.
-    const SECRET_PIN = "1904";
+    // Hardcode your secret PIN here!
+    const SECRET_PIN = adminPin;
 
     // Optional: In the future, you could read this from DB_CONFIG or Script Properties
     return pin === SECRET_PIN;
