@@ -27,16 +27,38 @@
     // ==========================================
 
     window.openMatchModal = () => {
-        if (!window.APP_STATE.isAdmin) return;
+        // 1. Safe Admin Check
+        if (!window.APP_STATE || !window.APP_STATE.isAdmin) {
+            console.error("Acesso Negado ou APP_STATE indefinido:", window.APP_STATE);
+            return alert("Erro: Sem permissões de Mister ou sessão inválida.");
+        }
+
+        // 2. Safe Form Check
         const form = document.getElementById('form-match');
+        if (!form) {
+            console.error("Elemento 'form-match' não encontrado no DOM!");
+            return alert("Erro: O formulário do jogo não carregou.");
+        }
         form.reset();
 
-        // Default values for Sunday League
-        document.getElementById('match-date').value = window.getNextSunday();
-        document.getElementById('match-opponent').value = 'Jogo de Domingo (9v9)';
-        document.getElementById('match-location').value = 'Campo de 9v9 - Rodovia';
+        // 3. Safe Modal Check
+        const modal = document.getElementById('modal-match');
+        if (!modal) {
+            console.error("Elemento 'modal-match' não encontrado no DOM!");
+            return alert("Erro: O modal do jogo não carregou.");
+        }
 
-        document.getElementById('modal-match').classList.remove('hidden');
+        // Default values for Sunday League
+        const dateInput = document.getElementById('match-date');
+        if (dateInput) dateInput.value = window.getNextSunday();
+
+        const opponentInput = document.getElementById('match-opponent');
+        if (opponentInput) opponentInput.value = 'Jogo de Domingo (9v9)';
+
+        const locationInput = document.getElementById('match-location');
+        if (locationInput) locationInput.value = 'Campo de 9v9 - Rodovia';
+
+        modal.classList.remove('hidden');
     };
 
     window.closeMatchModal = () => {
