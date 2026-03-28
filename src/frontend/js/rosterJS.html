@@ -87,7 +87,7 @@
                     ${photoEl}
                     <div class="flex flex-col">
                         <h3 class="text-white font-display tracking-wider text-lg group-hover:text-primary transition-colors">${player.name}</h3>
-                        <p class="text-slate-500 text-xs font-mono">${player.contact || 'Sem contacto'}</p>
+                        <p class="admin-only text-slate-500 text-xs font-mono">${player.contact || 'Sem contacto'}</p>
                     </div>
                 </div>
 
@@ -108,11 +108,6 @@
         }
 
         rosterGrid.innerHTML = rosterHTML;
-    };
-
-    // Placeholder for Phase 3
-    window.navigateToPlayerDetails = (playerId) => {
-        alert("Navegar para os detalhes do jogador: " + playerId + "\n(Criaremos esta view no próximo passo!)");
     };
 
 
