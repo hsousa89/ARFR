@@ -19,28 +19,25 @@
         const pastFinishedMatches = sortedHistory.filter(m => m.id !== match.id && (m.status === 'FINISHED' || m.status === 'COMPLETED'));
         const lastPlayedMatch = pastMatches.length > 0 ? pastMatches[0] : null;
 
-        // Helper to identify pure goalkeepers
         const isPureGR = (p) => p.positions && p.positions.length === 1 && p.positions[0] === 'GR';
 
         // 3. Calculate Priorities & Penalties
         fullParticipants.forEach(player => {
             player.hasPriority = false;
 
-            // Non-drafters never have priority
-            if (player.entersDraft === false) return;
+            // GUESTS and Non-drafters NEVER have priority
+            if (player.entersDraft === false || player.isGuest) return;
 
             // Calculate 3-Match Penalty (Only for non-shift workers)
             let penaltyApplied = false;
             if (!player.isShiftWorker && pastFinishedMatches.length >= 3) {
                 const last3 = pastFinishedMatches.slice(0, 3);
-                // Check if they were in the participants array of ANY of the last 3 matches
                 const attendedAny = last3.some(m => m.participants.some(p => p.playerId === player.id || p.playerId === player.playerId));
                 if (!attendedAny) {
                     penaltyApplied = true;
                 }
             }
 
-            // If penalty applies, strip priority and exit check
             if (penaltyApplied) return;
 
             // Standard Priority Logic
@@ -60,13 +57,14 @@
             }
         });
 
-        // 4. Split into pools
+        // 4. Split into pools (Isolating Guests completely)
         const priorityPlayers = fullParticipants.filter(p => p.hasPriority);
         const remainingPlayers = fullParticipants.filter(p => !p.hasPriority);
 
-        const pureGRs = remainingPlayers.filter(p => p.entersDraft !== false && isPureGR(p));
-        let regularDraftPool = remainingPlayers.filter(p => p.entersDraft !== false && !isPureGR(p));
-        const nonDrafters = remainingPlayers.filter(p => p.entersDraft === false);
+        const pureGRs = remainingPlayers.filter(p => p.entersDraft !== false && !p.isGuest && isPureGR(p));
+        let regularDraftPool = remainingPlayers.filter(p => p.entersDraft !== false && !p.isGuest && !isPureGR(p));
+        const nonDrafters = remainingPlayers.filter(p => p.entersDraft === false && !p.isGuest);
+        const guestsPool = remainingPlayers.filter(p => p.isGuest);
 
         // 5. Shuffle the regular draft pool
         for (let i = regularDraftPool.length - 1; i > 0; i--) {
@@ -74,8 +72,8 @@
             [regularDraftPool[i], regularDraftPool[j]] = [regularDraftPool[j], regularDraftPool[i]];
         }
 
-        // 6. Define the preferred loading order
-        const candidatesOrder = [...priorityPlayers, ...pureGRs, ...regularDraftPool, ...nonDrafters];
+        // 6. Define the preferred loading order (Guests are strictly last)
+        const candidatesOrder = [...priorityPlayers, ...pureGRs, ...regularDraftPool, ...nonDrafters, ...guestsPool];
 
         // 7. Enforce CAPACITY and GK Caps
         const CAPACITY = 18;
@@ -115,8 +113,8 @@
                 team: null,
                 position: p.position || (p.positions ? p.positions[0] : 'MED'),
                 draft: null,
-                // FIX: Only grant priority to waitlisted players IF they actually enter the draft
-                earnedPriority: (!isFirstTeam && p.entersDraft !== false)
+                // Ensure guests and non-drafters never earn priority for next match
+                earnedPriority: (!isFirstTeam && p.entersDraft !== false && !p.isGuest)
             };
         });
 
@@ -136,7 +134,7 @@
         const CAPACITY = 18;
 
         match.participants.forEach((p, index) => {
-            const playerDb = allPlayers.find(pl => pl.id === p.playerId) || { name: 'Desconhecido', entersDraft: true };
+            const playerDb = allPlayers.find(pl => pl.id === p.playerId) || { name: 'Desconhecido', entersDraft: true, isGuest: p.playerId.includes('guest') };
             const isWaitlisted = index >= CAPACITY;
 
             if (index === CAPACITY) {
@@ -149,16 +147,22 @@
                 `;
             }
 
-            // UI Fix: Show a neutral badge for waitlisted non-drafters
+            // Updated Badge Logic to clearly display Guests
             let badge = '';
             if (isWaitlisted) {
-                if (playerDb.entersDraft === false) {
+                if (playerDb.isGuest) {
+                    badge = '<span class="text-[9px] bg-slate-500/20 text-slate-500 px-2 py-1 rounded border border-slate-500/30 uppercase tracking-widest">Convidado</span>';
+                } else if (playerDb.entersDraft === false) {
                     badge = '<span class="text-[9px] bg-slate-500/20 text-slate-500 px-2 py-1 rounded border border-slate-500/30 uppercase tracking-widest">Lista de Espera</span>';
                 } else {
                     badge = '<span class="text-[9px] bg-red-500/20 text-red-500 px-2 py-1 rounded border border-red-500/30 uppercase tracking-widest">+ Prioridade Ganha</span>';
                 }
             } else {
-                badge = '<span class="text-[9px] bg-green-500/20 text-green-500 px-2 py-1 rounded border border-green-500/30 uppercase tracking-widest">Plantel Principal</span>';
+                if (playerDb.isGuest) {
+                    badge = '<span class="text-[9px] bg-blue-500/20 text-blue-500 px-2 py-1 rounded border border-blue-500/30 uppercase tracking-widest">Convidado</span>';
+                } else {
+                    badge = '<span class="text-[9px] bg-green-500/20 text-green-500 px-2 py-1 rounded border border-green-500/30 uppercase tracking-widest">Plantel Principal</span>';
+                }
             }
 
             html += `
