@@ -26,21 +26,29 @@
         const match = window.currentActiveMatch;
         if (!confirm('Deseja distribuir os jogadores principais pelas Equipas A e B?')) return;
 
+        const allPlayers = window.APP_DATA.players || [];
         const topPlayers = match.participants.filter(p => p.firstTeam === true);
         const waitlistPlayers = match.participants.filter(p => p.firstTeam === false);
 
         const getBucket = (pos) => {
             if (pos === 'GR') return 'GR';
-            if (['DC', 'LD', 'LE'].includes(pos)) return 'DEF';
-            if (pos === 'MED') return 'MED';
+            if (['DC', 'LD', 'LE', 'DEF'].includes(pos)) return 'DEF';
+            if (['MED', 'MD', 'ME'].includes(pos)) return 'MED';
             return 'AV';
         };
 
-        const draftablePlayers = topPlayers.map(p => ({
-            ...p,
-            rating: window.calculatePlayerRating(p.playerId),
-            bucket: getBucket(p.position)
-        }));
+        // 1. Normalize players (fetch missing positions from DB if needed)
+        const draftablePlayers = topPlayers.map(p => {
+            const playerInfo = allPlayers.find(pl => pl.id === p.playerId) || {};
+            const pos = p.position || (playerInfo.positions && playerInfo.positions.length > 0 ? playerInfo.positions[0] : 'MED');
+
+            return {
+                ...p,
+                position: pos,
+                rating: window.calculatePlayerRating(p.playerId),
+                bucket: getBucket(pos)
+            };
+        });
 
         const buckets = {
             'GR': draftablePlayers.filter(p => p.bucket === 'GR'),
@@ -55,28 +63,49 @@
         let scoreB = 0;
         const maxTeamSize = Math.ceil(topPlayers.length / 2);
 
-        const distributeBucket = (playerList) => {
+        // 2. The Smart Distribution Engine
+        const distributeBucket = (playerList, bucketName) => {
+            // Sort highest rated to lowest
             playerList.sort((a, b) => b.rating - a.rating);
+
             playerList.forEach(player => {
-                if (teamA.length >= maxTeamSize) {
-                    teamB.push({ ...player, team: 'B' });
-                } else if (teamB.length >= maxTeamSize) {
-                    teamA.push({ ...player, team: 'A' });
-                } else if (scoreA <= scoreB) {
+                const countA = teamA.filter(p => p.bucket === bucketName).length;
+                const countB = teamB.filter(p => p.bucket === bucketName).length;
+
+                // Rule A: Force Positional Balance First
+                if (countA < countB && teamA.length < maxTeamSize) {
                     teamA.push({ ...player, team: 'A' });
                     scoreA += player.rating;
-                } else {
+                } else if (countB < countA && teamB.length < maxTeamSize) {
                     teamB.push({ ...player, team: 'B' });
                     scoreB += player.rating;
+                }
+                // Rule B: If positions are tied, balance by Win-Rate Rating
+                else {
+                    if (teamA.length >= maxTeamSize) {
+                        teamB.push({ ...player, team: 'B' });
+                        scoreB += player.rating;
+                    } else if (teamB.length >= maxTeamSize) {
+                        teamA.push({ ...player, team: 'A' });
+                        scoreA += player.rating;
+                    } else if (scoreA <= scoreB) {
+                        teamA.push({ ...player, team: 'A' });
+                        scoreA += player.rating;
+                    } else {
+                        teamB.push({ ...player, team: 'B' });
+                        scoreB += player.rating;
+                    }
                 }
             });
         };
 
-        distributeBucket(buckets['GR']);
-        distributeBucket(buckets['DEF']);
-        distributeBucket(buckets['MED']);
-        distributeBucket(buckets['AV']);
+        // Distribute in order of core importance
+        distributeBucket(buckets['GR'], 'GR');
+        distributeBucket(buckets['DEF'], 'DEF');
+        distributeBucket(buckets['MED'], 'MED');
+        distributeBucket(buckets['AV'], 'AV');
 
+        // Rebuild the final participant list
         const draftedTopPlayers = [...teamA, ...teamB].map(p => ({
             playerId: p.playerId,
             isAttending: true,
@@ -106,7 +135,7 @@
         let htmlB = '';
         let totalRatingA = 0;
         let totalRatingB = 0;
-        const posOrder = { 'GR': 1, 'DC': 2, 'LD': 3, 'LE': 4, 'MED': 5, 'AT': 6, 'AV': 6 };
+        const posOrder = { 'GR': 1, 'DC': 2, 'LD': 3, 'LE': 4, 'DEF': 4, 'MED': 5, 'MD': 5, 'ME': 5, 'AT': 6, 'AV': 6 };
 
         const teamA = match.participants.filter(p => p.team === 'A');
         const teamB = match.participants.filter(p => p.team === 'B');
