@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <?!= include('src/frontend/head') ?>
+</head>
+
+<body class="bg-background-dark text-white font-body h-screen flex overflow-hidden">
+
+    <?!= include('src/frontend/components/sidebar') ?>
+
+    <main class="flex-1 p-8 overflow-y-auto" id="app-root">
+        <?!= include('src/frontend/views/dashboard') ?>
+        <?!= include('src/frontend/views/inventory') ?>
+        <?!= include('src/frontend/views/matches') ?>
+        <?!= include('src/frontend/views/match-board') ?>
+        <div id="view-finished" class="app-view hidden">
+        </div>
+        <?!= include('src/frontend/views/roster') ?>
+        <?!= include('src/frontend/views/treasury') ?>
+
+    </main>
+    <?!= include('src/frontend/views/modals/login') ?>
+    <?!= include('src/frontend/views/modals/transaction') ?>
+    <?!= include('src/frontend/views/modals/inventory') ?>
+    <?!= include('src/frontend/views/modals/player') ?>
+    <?!= include('src/frontend/views/modals/match') ?>
+    <?!= include('src/frontend/views/modals/guest') ?>
+
+    <script>
+        console.log("--- A INICIAR A APLICAÇÃO ---");
+        window.APP_DATA = <?!= initialData ?>;
+        console.log("1. Dados recebidos:", window.APP_DATA ? "SIM" : "NÃO", window.APP_DATA);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log("2. Estrutura HTML (DOM) carregada.");
+
+            if (typeof window.handleRouting !== 'function') {
+                console.error("ERRO CRÍTICO: router.html não carregou!");
+                return;
+            }
+
+            if (window.google && google.script && google.script.url) {
+                console.log("3. A pedir o URL ao servidor da Google...");
+                google.script.url.getLocation((location) => {
+                    console.log("4. URL recebido:", location);
+
+                    // Start with the base hash
+                    let fullRoute = location.hash || 'dashboard';
+
+                    // THE FIX: If Google caught an ID parameter, glue it back on!
+                    if (location.parameter && location.parameter.id) {
+                        fullRoute += '?id=' + location.parameter.id;
+                    }
+
+                    console.log("5. A encaminhar para:", fullRoute);
+                    window.handleRouting(fullRoute);
+                });
+            } else {
+                console.log("3. Modo Local Detetado. A encaminhar para:", window.location.hash);
+                window.handleRouting(window.location.hash);
+            }
+        });
+    </script>
+
+    <?!= include('src/frontend/js/auth') ?>
+    <?!= include('src/frontend/js/dashboard') ?>
+    <?!= include('src/frontend/js/inventory') ?>
+    <?!= include('src/frontend/js/matches') ?>
+    <?!= include('src/frontend/js/match-board') ?>
+    <?!= include('src/frontend/js/match-ongoing') ?>
+    <?!= include('src/frontend/js/roster') ?>
+    <?!= include('src/frontend/js/router') ?>
+    <?!= include('src/frontend/js/treasury') ?>
+</body>
+
+</html>

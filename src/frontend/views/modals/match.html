@@ -1,0 +1,52 @@
+<div id="modal-match"
+    class="hidden fixed inset-0 bg-background-dark/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
+    <div class="bg-surface border border-slate-700 w-full max-w-md shadow-hard overflow-hidden">
+        <header class="bg-background-dark border-b border-slate-700 px-6 py-4 flex justify-between items-center">
+            <h3 id="modal-match-title" class="text-white font-display tracking-wider text-xl uppercase">Novo Jogo</h3>
+            <button onclick="closeMatchModal()" class="text-slate-400 hover:text-white transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </header>
+
+        <form id="form-match" onsubmit="handleCreateMatch(event)" class="p-6 flex flex-col gap-4">
+            <input type="hidden" id="match-id" name="id">
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Data</label>
+                    <input type="date" id="match-date" required
+                        class="w-full bg-background-dark border border-slate-700 text-white px-4 py-2 focus:border-primary focus:outline-none transition-colors"
+                        style="color-scheme: dark;">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Hora</label>
+                    <input type="time" id="match-time" value="08:00" required
+                        class="w-full bg-background-dark border border-slate-700 text-white px-4 py-2 focus:border-primary focus:outline-none transition-colors"
+                        style="color-scheme: dark;">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Adversário /
+                    Tipo</label>
+                <input type="text" id="match-opponent" value="Jogo de Domingo (9v9)" required
+                    class="w-full bg-background-dark border border-slate-700 text-white px-4 py-2 focus:border-primary focus:outline-none transition-colors">
+            </div>
+
+            <div>
+                <label class="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Campo</label>
+                <input type="text" id="match-location" value="Campo de 9v9 - Rodovia" required
+                    class="w-full bg-background-dark border border-slate-700 text-white px-4 py-2 focus:border-primary focus:outline-none transition-colors">
+            </div>
+
+            <div class="mt-6 flex justify-end gap-4">
+                <button type="button" onclick="closeMatchModal()"
+                    class="px-6 py-2 text-slate-400 font-bold text-sm uppercase tracking-wider hover:text-white transition-colors">Cancelar</button>
+                <button type="submit" id="btn-save-match"
+                    class="bg-primary text-background-dark px-6 py-2 font-bold text-sm uppercase tracking-wider hover:bg-white transition-colors flex items-center gap-2">
+                    <span>Criar Jogo</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,138 @@
+<script>
+    // ==========================================
+    // GLOBAL STATE & INIT
+    // ==========================================
+    window.currentActiveMatch = null;
+
+    window.initMatchBoard = (matchId) => {
+        if (!window.APP_DATA || !window.APP_DATA.matches) {
+            console.warn('Data not ready yet. Waiting for initial load...');
+            return;
+        }
+        const matches = window.APP_DATA.matches || [];
+        const match = matches.find(m => m.id === matchId);
+
+        if (!match) {
+            console.error('Match not found:', matchId);
+            window.location.hash = '#matches';
+            return;
+        }
+
+        window.currentActiveMatch = match;
+
+        // Update Header UI
+        const matchDate = new Date(match.date);
+        const dateString = isNaN(matchDate) ? 'Data Desconhecida' : matchDate.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        document.getElementById('board-match-title').innerText = match.opponent || 'Jogo de Domingo de Manhã 9v9';
+        document.getElementById('board-match-subtitle').innerHTML = `
+            <span class="material-symbols-outlined text-[14px] align-middle">calendar_today</span> ${dateString} 
+            &nbsp;&nbsp;|&nbsp;&nbsp; 
+            <span class="material-symbols-outlined text-[14px] align-middle">location_on</span> ${match.location || 'Campo de 9v9 - Rodovia'}
+        `;
+
+        window.renderMatchBoardState();
+    };
+
+    // ==========================================
+    // STATE MACHINE CONTROLLER
+    // ==========================================
+    window.renderMatchBoardState = () => {
+        const match = window.currentActiveMatch;
+        const status = match.status || 'PRE-DRAFT';
+
+        // View containers
+        const viewPreDraft = document.getElementById('view-pre-draft');
+        const viewSort = document.getElementById('view-sort');
+        const viewDraft = document.getElementById('view-draft-container');
+        const viewOngoing = document.getElementById('view-ongoing');
+        const viewFinished = document.getElementById('view-finished');
+
+        // Hide all initially
+        if (viewPreDraft) viewPreDraft.classList.add('hidden');
+        if (viewSort) viewSort.classList.add('hidden');
+        if (viewDraft) viewDraft.classList.add('hidden');
+        if (viewOngoing) viewOngoing.classList.add('hidden');
+        if (viewFinished) viewFinished.classList.add('hidden');
+
+        // Main Action Button
+        const btnMainAction = document.getElementById('btn-run-draft');
+        if (btnMainAction) btnMainAction.classList.remove('hidden');
+
+        // Route to the correct render function
+        switch (status) {
+            case 'PRE-DRAFT':
+                if (viewPreDraft) viewPreDraft.classList.remove('hidden');
+                if (btnMainAction) {
+                    btnMainAction.innerHTML = '<span class="material-symbols-outlined align-middle mr-2 text-sm">sort</span> Fechar & Ordenar Lista';
+                    btnMainAction.className = 'admin-only bg-yellow-500 text-background-dark px-6 py-2 font-bold text-sm uppercase tracking-widest hover:bg-yellow-400 transition-all shadow-hard';
+                    btnMainAction.onclick = () => window.advanceToSort();
+                }
+                if (typeof window.renderPreDraftColumns === 'function') window.renderPreDraftColumns();
+                break;
+
+            case 'SORT':
+                if (viewSort) viewSort.classList.remove('hidden');
+                if (btnMainAction) {
+                    btnMainAction.innerHTML = '<span class="material-symbols-outlined align-middle mr-2 text-sm">casino</span> Gerar Equipas Equilibradas';
+                    btnMainAction.className = 'admin-only bg-primary text-background-dark px-6 py-2 font-bold text-sm uppercase tracking-widest hover:bg-white transition-all shadow-hard';
+                    btnMainAction.onclick = () => window.advanceToDraft();
+                }
+                if (typeof window.renderSortView === 'function') window.renderSortView();
+                break;
+
+            case 'DRAFT':
+                if (viewDraft) {
+                    viewDraft.classList.remove('hidden');
+                    viewDraft.classList.add('flex');
+                }
+                if (btnMainAction) {
+                    btnMainAction.innerHTML = '<span class="material-symbols-outlined align-middle mr-2 text-sm">play_arrow</span> Iniciar Jogo';
+                    btnMainAction.className = 'admin-only bg-green-500 text-background-dark px-6 py-2 font-bold text-sm uppercase tracking-widest hover:bg-green-400 transition-all shadow-hard';
+                    btnMainAction.onclick = () => window.startMatch();
+                }
+                if (typeof window.renderDraftView === 'function') window.renderDraftView();
+                break;
+
+            case 'ONGOING':
+                if (viewOngoing) viewOngoing.classList.remove('hidden');
+                if (btnMainAction) btnMainAction.classList.add('hidden');
+                if (typeof window.renderOngoingView === 'function') window.renderOngoingView();
+                break;
+
+            case 'FINISHED':
+            case 'COMPLETED':
+                if (viewFinished) viewFinished.classList.remove('hidden');
+                if (btnMainAction) btnMainAction.classList.add('hidden');
+                if (typeof window.renderFinishedView === 'function') window.renderFinishedView();
+                break;
+        }
+    };
+
+    window.openMatch = (matchId) => {
+        // 1. Ensure data is actually loaded
+        if (!window.APP_DATA || !window.APP_DATA.matches) {
+            alert("A carregar dados, aguarde um segundo...");
+            return;
+        }
+
+        // 2. Change the view using your router (assuming standard class-based toggle)
+        document.querySelectorAll('.app-view').forEach(v => {
+            v.classList.remove('block');
+            v.classList.add('hidden');
+        });
+
+        // 3. Unhide the parent Match Board wrapper
+        const boardWrapper = document.getElementById('view-match-board');
+        if (boardWrapper) {
+            boardWrapper.classList.remove('hidden');
+            boardWrapper.classList.add('block');
+        }
+
+        // 4. Update the URL hash WITHOUT reloading the page
+        window.history.pushState(null, null, `#match-board`);
+
+        // 5. Fire the initialization
+        window.initMatchBoard(matchId);
+    };
+</script>

@@ -1,0 +1,60 @@
+<script>
+    window.revertToPreDraft = () => {
+        const isAdmin = window.APP_STATE && window.APP_STATE.isAdmin === true;
+        if (!isAdmin) return;
+        if (!confirm('Atenção: Deseja reabrir a convocatória? Isto vai apagar a ordenação e as equipas geradas.')) return;
+
+        const match = window.currentActiveMatch;
+        match.status = 'PRE-DRAFT';
+        match.participants.forEach(p => {
+            p.team = null;
+            p.firstTeam = false;
+            p.earnedPriority = false;
+        });
+
+        window.renderMatchBoardState();
+        google.script.run.apiSaveMatch(match);
+    };
+
+    window.revertToSort = () => {
+        const isAdmin = window.APP_STATE && window.APP_STATE.isAdmin === true;
+        if (!isAdmin) return;
+        if (!confirm('Atenção: Deseja apagar as equipas atuais e voltar à lista ordenada?')) return;
+
+        const match = window.currentActiveMatch;
+        match.status = 'SORT';
+        match.participants.forEach(p => p.team = null);
+
+        window.renderMatchBoardState();
+        google.script.run.apiSaveMatch(match);
+    };
+
+    window.startMatch = () => {
+        const isAdmin = window.APP_STATE && window.APP_STATE.isAdmin === true;
+        if (!isAdmin) return;
+        if (!confirm('Iniciar o jogo? (Poderá adicionar jogadores atrasados depois)')) return;
+
+        const match = window.currentActiveMatch;
+        match.status = 'ONGOING';
+        if (!match.score) match.score = { teamA: 0, teamB: 0 };
+
+        window.renderMatchBoardState();
+        google.script.run.apiSaveMatch(match);
+    };
+
+    window.goBackToMatches = () => {
+        if (typeof window.navigateToView === 'function') {
+            window.navigateToView('matches');
+        } else {
+            document.querySelectorAll('.app-view').forEach(v => {
+                v.classList.remove('block');
+                v.classList.add('hidden');
+            });
+            const matchesView = document.getElementById('view-matches');
+            if (matchesView) {
+                matchesView.classList.remove('hidden');
+                matchesView.classList.add('block');
+            }
+        }
+    };
+</script>

@@ -1,0 +1,167 @@
+<script>
+    window.calculatePlayerRating = (playerId) => {
+        const matches = window.APP_DATA.matches || [];
+        const pastMatches = matches
+            .filter(m => (m.status === 'FINISHED' || m.status === 'COMPLETED') && m.participants.some(p => p.playerId === playerId))
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 10);
+
+        if (pastMatches.length === 0) return 50;
+
+        let wins = 0;
+        pastMatches.forEach(m => {
+            const pData = m.participants.find(p => p.playerId === playerId);
+            if (!pData || !pData.team) return;
+            const isTeamA = pData.team === 'A';
+            const scoreA = m.score?.teamA || 0;
+            const scoreB = m.score?.teamB || 0;
+            if (isTeamA && scoreA > scoreB) wins++;
+            if (!isTeamA && scoreB > scoreA) wins++;
+        });
+
+        return Math.round((wins / pastMatches.length) * 100);
+    };
+
+    window.advanceToDraft = () => {
+        const match = window.currentActiveMatch;
+        if (!confirm('Deseja distribuir os jogadores principais pelas Equipas A e B?')) return;
+
+        const topPlayers = match.participants.filter(p => p.firstTeam === true);
+        const waitlistPlayers = match.participants.filter(p => p.firstTeam === false);
+
+        const getBucket = (pos) => {
+            if (pos === 'GR') return 'GR';
+            if (['DC', 'LD', 'LE'].includes(pos)) return 'DEF';
+            if (pos === 'MED') return 'MED';
+            return 'AV';
+        };
+
+        const draftablePlayers = topPlayers.map(p => ({
+            ...p,
+            rating: window.calculatePlayerRating(p.playerId),
+            bucket: getBucket(p.position)
+        }));
+
+        const buckets = {
+            'GR': draftablePlayers.filter(p => p.bucket === 'GR'),
+            'DEF': draftablePlayers.filter(p => p.bucket === 'DEF'),
+            'MED': draftablePlayers.filter(p => p.bucket === 'MED'),
+            'AV': draftablePlayers.filter(p => p.bucket === 'AV')
+        };
+
+        const teamA = [];
+        const teamB = [];
+        let scoreA = 0;
+        let scoreB = 0;
+        const maxTeamSize = Math.ceil(topPlayers.length / 2);
+
+        const distributeBucket = (playerList) => {
+            playerList.sort((a, b) => b.rating - a.rating);
+            playerList.forEach(player => {
+                if (teamA.length >= maxTeamSize) {
+                    teamB.push({ ...player, team: 'B' });
+                } else if (teamB.length >= maxTeamSize) {
+                    teamA.push({ ...player, team: 'A' });
+                } else if (scoreA <= scoreB) {
+                    teamA.push({ ...player, team: 'A' });
+                    scoreA += player.rating;
+                } else {
+                    teamB.push({ ...player, team: 'B' });
+                    scoreB += player.rating;
+                }
+            });
+        };
+
+        distributeBucket(buckets['GR']);
+        distributeBucket(buckets['DEF']);
+        distributeBucket(buckets['MED']);
+        distributeBucket(buckets['AV']);
+
+        const draftedTopPlayers = [...teamA, ...teamB].map(p => ({
+            playerId: p.playerId,
+            isAttending: true,
+            arrivalTime: p.arrivalTime,
+            firstTeam: true,
+            team: p.team,
+            position: p.position,
+            draft: null,
+            earnedPriority: false
+        }));
+
+        match.participants = [...draftedTopPlayers, ...waitlistPlayers];
+        match.status = 'DRAFT';
+        window.renderMatchBoardState();
+        google.script.run.apiSaveMatch(match);
+    };
+
+    window.renderDraftView = () => {
+        const match = window.currentActiveMatch;
+        const allPlayers = window.APP_DATA.players || [];
+        const listA = document.getElementById('list-team-a');
+        const listB = document.getElementById('list-team-b');
+
+        if (!listA || !listB) return;
+
+        let htmlA = '';
+        let htmlB = '';
+        let totalRatingA = 0;
+        let totalRatingB = 0;
+        const posOrder = { 'GR': 1, 'DC': 2, 'LD': 3, 'LE': 4, 'MED': 5, 'AT': 6, 'AV': 6 };
+
+        const teamA = match.participants.filter(p => p.team === 'A');
+        const teamB = match.participants.filter(p => p.team === 'B');
+
+        const renderPlayerRow = (p) => {
+            const playerInfo = allPlayers.find(pl => pl.id === p.playerId) || { name: 'Desconhecido' };
+            const rating = window.calculatePlayerRating(p.playerId);
+            const pos = p.position || (playerInfo.positions ? playerInfo.positions[0] : 'MED');
+
+            return `
+                <div class="flex items-center justify-between bg-background-dark/30 border border-slate-800 p-3 rounded mb-2 hover:border-slate-600 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <span class="text-[10px] font-bold bg-slate-800 text-slate-400 w-10 py-1 rounded text-center">${pos}</span>
+                        <span class="text-white font-bold text-sm">${playerInfo.name}</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-[10px] text-slate-500 font-mono">${rating}% WR</span>
+                        <button onclick="window.swapTeam('${p.playerId}')" class="admin-only text-slate-600 hover:text-primary transition-colors" title="Trocar de Equipa">
+                            <span class="material-symbols-outlined text-sm">swap_horiz</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        };
+
+        teamA.sort((a, b) => (posOrder[a.position] || 9) - (posOrder[b.position] || 9)).forEach(p => {
+            htmlA += renderPlayerRow(p);
+            totalRatingA += window.calculatePlayerRating(p.playerId);
+        });
+
+        teamB.sort((a, b) => (posOrder[a.position] || 9) - (posOrder[b.position] || 9)).forEach(p => {
+            htmlB += renderPlayerRow(p);
+            totalRatingB += window.calculatePlayerRating(p.playerId);
+        });
+
+        listA.innerHTML = htmlA || '<p class="text-slate-500 text-sm p-4 text-center">Nenhum jogador na Equipa Vermelha.</p>';
+        listB.innerHTML = htmlB || '<p class="text-slate-500 text-sm p-4 text-center">Nenhum jogador na Equipa Roxa.</p>';
+
+        const avgA = document.getElementById('avg-rating-a');
+        const avgB = document.getElementById('avg-rating-b');
+        if (avgA) avgA.innerText = teamA.length > 0 ? Math.round(totalRatingA / teamA.length) + '%' : '0%';
+        if (avgB) avgB.innerText = teamB.length > 0 ? Math.round(totalRatingB / teamB.length) + '%' : '0%';
+    };
+
+    window.swapTeam = (playerId) => {
+        const match = window.currentActiveMatch;
+        const p = match.participants.find(part => part.playerId === playerId);
+        if (p) {
+            p.team = (p.team === 'A') ? 'B' : 'A';
+            window.renderDraftView();
+            google.script.run.apiSaveMatch(match);
+        }
+    };
+
+    window.reDraft = () => {
+        if (confirm('Refazer o sorteio automático?')) window.advanceToDraft();
+    };
+</script>

@@ -1,0 +1,122 @@
+<div id="modal-player"
+    class="hidden fixed inset-0 bg-background-dark/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-surface border border-slate-700 w-full max-w-md shadow-hard overflow-hidden my-auto">
+
+        <header class="bg-background-dark border-b border-slate-700 px-6 py-4 flex justify-between items-center">
+            <h3 id="modal-player-title" class="text-white font-display tracking-wider text-xl uppercase">Perfil do
+                Jogador</h3>
+            <button type="button" onclick="closePlayerModal()"
+                class="text-slate-400 hover:text-white transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </header>
+
+        <form id="form-player" onsubmit="window.handleSavePlayer(event)"
+            class="p-6 flex flex-col gap-5 max-h-[75vh] overflow-y-auto custom-scrollbar">
+            <input type="hidden" id="player-id" name="id">
+            <input type="hidden" id="player-added" name="addedAt">
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Nome
+                        Completo / Alcunha</label>
+                    <input type="text" id="player-name" required
+                        class="w-full bg-background-dark border border-slate-700 text-white px-3 py-2 text-sm focus:border-primary focus:outline-none transition-colors rounded">
+                </div>
+
+                <div>
+                    <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">URL da Foto
+                        (Opcional)</label>
+                    <input type="url" id="player-photo" placeholder="https://..."
+                        class="w-full bg-background-dark border border-slate-700 text-white px-3 py-2 text-sm focus:border-primary focus:outline-none transition-colors rounded">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label
+                            class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Email</label>
+                        <input type="email" id="player-email"
+                            class="w-full bg-background-dark border border-slate-700 text-white px-3 py-2 text-sm focus:border-primary focus:outline-none transition-colors rounded">
+                    </div>
+                    <div>
+                        <label
+                            class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Contacto
+                            (WhatsApp)</label>
+                        <input type="text" id="player-contact" placeholder="+351..."
+                            class="w-full bg-background-dark border border-slate-700 text-white px-3 py-2 text-sm focus:border-primary focus:outline-none transition-colors rounded">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Posição
+                        Principal</label>
+                    <select id="player-position" required
+                        class="w-full bg-background-dark border border-slate-700 text-white px-3 py-2 text-sm focus:border-primary focus:outline-none transition-colors rounded">
+                        <option value="GR">Guarda-Redes (GR)</option>
+                        <option value="DC">Defesa Central (DC)</option>
+                        <option value="LD">Defesa Direito (LD)</option>
+                        <option value="LE">Defesa Esquerdo (LE)</option>
+                        <option value="MED">Médio (MED)</option>
+                        <option value="AT">Ponta de Lança (AT)</option>
+                        <option value="AV">Extremo/Avançado (AV)</option>
+                    </select>
+                </div>
+            </div>
+
+            <hr class="border-slate-800">
+
+            <div class="space-y-3">
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" id="player-enters-draft"
+                        class="w-4 h-4 accent-primary bg-background-dark border-slate-700">
+                    <div class="flex flex-col">
+                        <span class="text-sm text-white font-bold">Entra no Sorteio Automático</span>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest">Calcula prioridades e gera
+                            equipas</span>
+                    </div>
+                </label>
+
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" id="player-is-shift-worker"
+                        class="w-4 h-4 accent-primary bg-background-dark border-slate-700">
+                    <div class="flex flex-col">
+                        <span class="text-sm text-white font-bold">Trabalhador por Turnos</span>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest">Regras especiais de
+                            assiduidade</span>
+                    </div>
+                </label>
+
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" id="player-is-admin"
+                        class="w-4 h-4 accent-red-500 bg-background-dark border-slate-700">
+                    <div class="flex flex-col">
+                        <span class="text-sm text-red-500 font-bold">Acesso Mister (Admin)</span>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest">Permite editar jogos e
+                            jogadores</span>
+                    </div>
+                </label>
+            </div>
+
+            <hr class="border-slate-800">
+
+            <div>
+                <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Estado no
+                    Plantel</label>
+                <select id="player-status"
+                    class="w-full bg-background-dark border border-slate-700 text-white px-3 py-2 text-sm focus:border-primary focus:outline-none transition-colors rounded">
+                    <option value="ACTIVE">Ativo (Pode ser convocado)</option>
+                    <option value="INACTIVE">Inativo / Removido</option>
+                </select>
+            </div>
+
+            <div class="mt-4 flex justify-end gap-4 pt-4 border-t border-slate-800 sticky bottom-0 bg-surface">
+                <button type="button" onclick="window.closePlayerModal()"
+                    class="px-6 py-2 text-slate-400 font-bold text-sm uppercase tracking-wider hover:text-white transition-colors">Cancelar</button>
+                <button type="submit" id="btn-save-player"
+                    class="bg-primary text-background-dark px-6 py-2 font-bold text-sm uppercase tracking-wider hover:bg-white transition-colors shadow-hard">
+                    Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

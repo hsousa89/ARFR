@@ -1,0 +1,227 @@
+<script>
+    /**
+     * MATCHES CONTROLLER
+     * Handles the Match List (View) and Match Creation (Modal).
+     */
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initial render call
+        window.renderMatchesList();
+    });
+
+    // ==========================================
+    // 1. DATE HELPERS
+    // ==========================================
+
+    window.getNextSunday = () => {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+        const nextSunday = new Date(today);
+        nextSunday.setDate(today.getDate() + daysUntilSunday);
+        return nextSunday.toISOString().split('T')[0];
+    };
+
+    // ==========================================
+    // 2. MODAL CONTROLS
+    // ==========================================
+
+    window.openMatchModal = () => {
+        if (!window.APP_STATE.isAdmin) return;
+        const form = document.getElementById('form-match');
+        form.reset();
+
+        // Default values for Sunday League
+        document.getElementById('match-date').value = window.getNextSunday();
+        document.getElementById('match-opponent').value = 'Jogo de Domingo (9v9)';
+        document.getElementById('match-location').value = 'Campo de 9v9 - Rodovia';
+
+        document.getElementById('modal-match').classList.remove('hidden');
+    };
+
+    window.closeMatchModal = () => {
+        document.getElementById('modal-match').classList.add('hidden');
+    };
+
+    // ==========================================
+    // 3. CREATE / SAVE LOGIC
+    // ==========================================
+
+    window.handleCreateMatch = (e) => {
+        e.preventDefault();
+
+        const rawDate = document.getElementById('match-date').value;
+        // Ensure ID is robust
+        const matchId = 'm_' + rawDate.replace(/-/g, '');
+
+        // The "Bulletproof" Object mirroring your working Previous structure
+        const matchData = {
+            id: matchId,
+            date: new Date(rawDate).toISOString(), // Standardize to ISO string
+            status: 'PRE-DRAFT', // Phase 1
+            score: { teamA: 0, teamB: 0 },
+            opponent: document.getElementById('match-opponent').value,
+            location: document.getElementById('match-location').value,
+            participants: [], // Will be filled with objects containing playerId, isAttending, etc.
+            events: []
+        };
+
+        // 1. Local Update
+        if (!window.APP_DATA.matches) window.APP_DATA.matches = [];
+        window.APP_DATA.matches.push(matchData);
+
+        // 2 & 3. Navigate to Board
+        closeMatchModal();
+        window.navigateToMatch(matchId);
+
+        // 4. Background Save
+        google.script.run
+            .withFailureHandler(err => console.error("Sync Error:", err))
+            .apiSaveMatch(matchData);
+    };
+
+
+    // ==========================================
+    // NAVIGATION HELPER
+    // ==========================================
+    window.navigateToMatch = (matchId) => {
+        // 1. Push to Google Script History (prevents iframe error)
+        if (window.google && google.script && google.script.history) {
+            google.script.history.push(null, { id: matchId }, 'match-board');
+        } else {
+            // Fallback for local testing
+            window.location.hash = `#match-board?id=${matchId}`;
+        }
+
+        // 2. FIRST: Manually switch the UI views (Hide everything, show the board wrapper)
+        document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+
+        const boardWrapper = document.getElementById('view-match-board');
+        if (boardWrapper) boardWrapper.classList.remove('hidden');
+
+        // 3. THEN: Initialize the Board logic (This unhides the specific phase inside the board)
+        if (window.initMatchBoard) {
+            window.initMatchBoard(matchId);
+        }
+    };
+
+
+    // ==========================================
+    // 4. LIST RENDERING
+    // ==========================================
+
+    window.renderMatchesList = () => {
+        const db = window.APP_DATA;
+        const matchesList = document.getElementById('matches-list');
+        if (!matchesList || !db) return;
+
+        const matches = db.matches || [];
+
+        if (matches.length === 0) {
+            matchesList.innerHTML = `
+        <div class="bg-surface border border-slate-800 p-12 text-center text-slate-500 font-body uppercase tracking-widest text-xs">
+            Nenhum jogo registado. <br>
+            <button onclick="window.openMatchModal()" class="text-primary mt-2 hover:underline">+ Criar Jogo</button>
+        </div>`;
+            return;
+        }
+
+        // Sort: Newest (Future) first
+        const sortedMatches = [...matches].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        matchesList.innerHTML = sortedMatches.map((match, index) => {
+            const matchDate = new Date(match.date);
+            const dateString = isNaN(matchDate)
+                ? 'Data Desconhecida'
+                : matchDate.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' });
+
+            const scoreA = match.score?.teamA || 0;
+            const scoreB = match.score?.teamB || 0;
+            const gameNumber = sortedMatches.length - index;
+
+            // Outcome Logic (V/D/E) - Only matters if status is FINISHED or COMPLETED
+            let outcomeA = 'E', outcomeB = 'E';
+            let badgeStyleA = 'bg-slate-700 text-slate-400';
+            let badgeStyleB = 'bg-slate-700 text-slate-400';
+
+            // UPDATED to catch legacy matches!
+            if (match.status === 'FINISHED' || match.status === 'COMPLETED') {
+                if (scoreA > scoreB) {
+                    outcomeA = 'V'; outcomeB = 'D';
+                    badgeStyleA = 'bg-primary text-background-dark';
+                    badgeStyleB = 'bg-background-dark text-slate-600 border border-slate-800';
+                } else if (scoreB > scoreA) {
+                    outcomeA = 'D'; outcomeB = 'V';
+                    badgeStyleA = 'bg-background-dark text-slate-600 border border-slate-800';
+                    badgeStyleB = 'bg-primary text-background-dark';
+                }
+            }
+
+            // Status Badge Logic
+            const statusBadge = getStatusBadge(match.status);
+
+            return `
+            <div onclick="window.navigateToMatch('${match.id}')"
+             class="bg-surface border border-slate-800 mb-4 flex flex-col md:flex-row items-stretch hover:border-primary/50 transition-all group cursor-pointer overflow-hidden shadow-lg">
+            
+            <div class="bg-background-dark/50 border-r border-slate-800 p-6 w-full md:w-48 flex flex-col justify-center items-center shrink-0">
+                <span class="text-slate-600 text-[10px] font-bold uppercase tracking-widest mb-1">Jogo ${gameNumber}</span>
+                <span class="text-white font-display text-sm text-center uppercase">${dateString}</span>
+                <span class="mt-2 px-2 py-0.5 text-[9px] font-bold uppercase tracking-tighter ${statusBadge.class}">${statusBadge.text}</span>
+            </div>
+
+            <div class="flex-1 flex justify-center items-stretch p-0 min-h-[120px]">
+                <div class="flex-1 bg-red-950/20 p-4 flex flex-col items-end justify-center border-r border-slate-800/50">
+                    <span class="text-[10px] font-display uppercase tracking-widest text-red-500/60">Vermelha</span>
+                    <span class="font-display text-4xl text-white">${scoreA}</span>
+                    <span class="w-6 h-6 flex items-center justify-center font-bold text-xs mt-1 ${badgeStyleA}">${outcomeA}</span>
+                </div>
+
+                <div class="flex items-center justify-center px-4 bg-background-dark z-10">
+                    <span class="text-slate-700 font-display text-xs">VS</span>
+                </div>
+                
+                <div class="flex-1 bg-purple-950/20 p-4 flex flex-col items-start justify-center border-l border-slate-800/50">
+                    <span class="text-[10px] font-display uppercase tracking-widest text-purple-500/60">Roxa</span>
+                    <span class="font-display text-4xl text-white">${scoreB}</span>
+                    <span class="w-6 h-6 flex items-center justify-center font-bold text-xs mt-1 ${badgeStyleB}">${outcomeB}</span>
+                </div>
+            </div>
+
+            <div class="p-4 w-full md:w-20 flex justify-center items-center border-t md:border-t-0 md:border-l border-slate-800 shrink-0 bg-background-dark/20">
+                <span class="material-symbols-outlined text-slate-700 group-hover:text-primary group-hover:translate-x-1 transition-all">arrow_forward_ios</span>
+            </div>
+
+        </div>`;
+        }).join('');
+    };
+
+    /**
+     * Helper to get Status Labels
+     */
+    function getStatusBadge(status) {
+        switch (status) {
+            case 'PRE-DRAFT': return { text: 'Convocatória', class: 'text-blue-500 border border-blue-500/30' };
+            case 'SORT': return { text: 'Lista Ordenada', class: 'text-yellow-500 border border-yellow-500/30' }; // NEW!
+            case 'DRAFT': return { text: 'Equipas', class: 'text-purple-500 border border-purple-500/30' };
+            case 'ONGOING': return { text: 'Ao Vivo', class: 'text-red-500 border border-red-500/30 animate-pulse' };
+            case 'FINISHED': return { text: 'Encerrado', class: 'text-slate-500 bg-slate-800/50' };
+            default: return { text: 'Agendado', class: 'text-slate-500' };
+        }
+    }
+
+
+    function handleDraftClick(attendingPlayers) {
+        // Assuming you are using google.script.run for GAS
+        google.script.run
+            .withSuccessHandler(function (draftedTeams) {
+                // Update your UI with the newly drafted teams
+                renderDraftedTeams(draftedTeams);
+            })
+            .withFailureHandler(function (error) {
+                console.error("Draft failed:", error);
+            })
+            .executeDraftProcess(attendingPlayers); // Calls the backend controller
+    }
+
+</script>

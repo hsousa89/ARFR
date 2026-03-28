@@ -1,0 +1,126 @@
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const db = window.APP_DATA;
+        if (!db) return;
+
+        const matches = db.matches || [];
+        const players = db.players || [];
+
+        // --- GLOBAL STATS ---
+        const totalMatches = matches.length;
+        let totalGoals = 0;
+
+        matches.forEach(match => {
+            const goalsA = match.score?.teamA || 0;
+            const goalsB = match.score?.teamB || 0;
+            totalGoals += (goalsA + goalsB);
+        });
+
+        const activePlayers = players.filter(p => !p.removedAt).length;
+        const avgGoals = totalMatches > 0 ? (totalGoals / totalMatches).toFixed(1) : 0;
+
+        // Helper to safely update elements
+        const updateEl = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = val;
+        };
+
+        updateEl('stat-matches', totalMatches);
+        updateEl('stat-goals', totalGoals);
+        updateEl('stat-players', activePlayers);
+        updateEl('stat-avg', avgGoals);
+
+        // --- GOLDEN BOOT ---
+        const playerMap = {};
+        players.forEach(p => {
+            // 1. Force the ID to be a clean string without hidden spaces
+            if (p.id !== undefined && p.id !== null) {
+                const safeId = String(p.id).trim();
+                // 2. Catch both English and Portuguese property names!
+                playerMap[safeId] = p.name || p.nome || 'Sem Nome';
+            }
+        });
+
+        const goalTallies = {};
+        matches.forEach(match => {
+            // Tally from participants array
+            if (match.participants) {
+                match.participants.forEach(p => {
+                    const pGoals = p.goals || 0;
+                    // 3. Fallback in case the DB uses 'id' instead of 'playerId'
+                    const rawId = p.playerId !== undefined ? p.playerId : p.id;
+
+                    if (pGoals > 0 && rawId !== undefined && rawId !== null) {
+                        const safePlayerId = String(rawId).trim();
+                        goalTallies[safePlayerId] = (goalTallies[safePlayerId] || 0) + pGoals;
+                    }
+                });
+            }
+            // Tally from events array
+            if (match.events) {
+                match.events.forEach(event => {
+                    if (event.type === 'GOAL' && event.playerId !== undefined && event.playerId !== null) {
+                        const safePlayerId = String(event.playerId).trim();
+                        goalTallies[safePlayerId] = (goalTallies[safePlayerId] || 0) + 1;
+                    }
+                });
+            }
+        });
+
+        const goldenBootStandings = Object.keys(goalTallies)
+            .map(playerId => ({
+                name: playerMap[playerId] || 'JOGADOR DESCONHECIDO',
+                goals: goalTallies[playerId]
+            }))
+            .sort((a, b) => b.goals - a.goals)
+            .slice(0, 5); // Top 5 scorers
+
+        const goldenBootContainer = document.getElementById('golden-boot-container');
+        if (!goldenBootContainer) return;
+
+        if (goldenBootStandings.length === 0) {
+            goldenBootContainer.innerHTML = '<div class="p-5 text-slate-400 text-sm">Ainda sem golos registados.</div>';
+        } else {
+            let tableHTML = `
+            <table class="w-full text-left">
+                <thead class="bg-background-dark border-b border-primary/50 text-slate-500 text-xs uppercase tracking-wider">
+                    <tr>
+                        <th class="py-3 px-5 font-bold w-12 text-center">#</th>
+                        <th class="py-3 px-5 font-bold">Jogador</th>
+                        <th class="py-3 px-5 font-bold text-right">Golos</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm font-bold uppercase">
+        `;
+
+            goldenBootStandings.forEach((player, index) => {
+                const isFirst = index === 0;
+                const bgClass = index % 2 === 0 ? 'bg-surface' : 'bg-[#111111]';
+                const rankColor = isFirst ? 'text-primary' : 'text-slate-500';
+                const nameColor = isFirst ? 'text-white' : 'text-slate-300';
+                const goalsColor = isFirst ? 'text-primary' : 'text-white';
+
+                tableHTML += `
+                <tr class="border-b border-slate-800 ${bgClass} hover:bg-white/5 transition-colors">
+                    <td class="py-3 px-5 text-center ${rankColor} font-display text-xl">${index + 1}</td>
+                    <td class="py-3 px-5 ${nameColor}">${player.name}</td>
+                    <td class="py-3 px-5 text-right font-display text-2xl ${goalsColor}">${player.goals}</td>
+                </tr>
+            `;
+            });
+
+            tableHTML += `
+                </tbody>
+            </table>
+            <div class="p-4 mt-auto border-t border-slate-800">
+                <button class="w-full py-2 border border-slate-700 text-slate-300 uppercase font-bold text-xs tracking-wider hover:border-primary hover:text-primary transition-colors">
+                    Estatísticas Completas
+                </button>
+            </div>
+        `;
+
+            goldenBootContainer.className = "p-0";
+            goldenBootContainer.innerHTML = tableHTML;
+        }
+    });
+</script>

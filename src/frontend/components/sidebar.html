@@ -1,0 +1,57 @@
+<div
+    class="relative flex h-auto min-h-screen w-64 flex-col bg-surface dark group/design-root overflow-x-hidden shrink-0 border-r border-slate-800">
+    <div class="layout-container flex h-full grow flex-col">
+        <div class="flex flex-col h-full justify-between p-4">
+            <div class="flex flex-col gap-8">
+                <div class="flex flex-col border-b border-slate-800 pb-6">
+                    <h1 class="text-white text-3xl font-display leading-tight tracking-wider">ARFR</h1>
+                    <p class="text-primary text-sm font-body uppercase tracking-widest font-semibold">Futebol de Domingo
+                    </p>
+                </div>
+                <nav class="flex flex-col gap-2">
+                    <a class="flex items-center gap-3 px-3 py-3 bg-primary text-background-dark transition-all hover:-translate-y-[2px] hover:shadow-hard"
+                        href="#dashboard">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">house</span>
+                        <span class="text-sm font-bold uppercase tracking-wider">Painel</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800"
+                        href="#roster">
+                        <span class="material-symbols-outlined">user_attributes</span>
+                        <span class="text-sm font-bold uppercase tracking-wider">Plantel</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800"
+                        href="#matches">
+                        <span class="material-symbols-outlined">calendar_today</span>
+                        <span class="text-sm font-bold uppercase tracking-wider">Centro de Jogos</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800"
+                        href="#treasury">
+                        <span class="material-symbols-outlined">payments</span>
+                        <span class="text-sm font-bold uppercase tracking-wider">Tesouraria</span>
+                    </a>
+                    <a href="#inventory"
+                        class="flex items-center gap-3 px-3 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800">
+                        <span class="material-symbols-outlined group-hover:text-primary transition-colors"
+                            style="font-variation-settings: 'FILL' 0">inventory_2</span>
+                        <span class="text-sm font-bold uppercase tracking-wider">Inventário</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-3 pt-6 border-t border-slate-800">
+                <div class="w-10 h-10 bg-slate-800 flex items-center justify-center text-primary font-display text-xl">M
+                </div>
+                <div class="cursor-pointer group flex items-center gap-4" onclick="openAdminModal()">
+                    <div
+                        class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 group-hover:border-primary transition-colors flex items-center justify-center">
+                        <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">person</span>
+                    </div>
+                    <div>
+                        <p class="text-white text-sm font-bold uppercase group-hover:text-primary transition-colors">
+                            Mister</p>
+                        <p class="text-slate-500 text-xs">Treinador</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,42 @@
+<div id="modal-guest"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-background-dark/90 backdrop-blur-sm p-4">
+    <div class="bg-surface border-t-4 border-primary w-full max-w-md shadow-2xl">
+        <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-background-dark/50">
+            <h3 class="text-white font-display text-xl uppercase tracking-widest">Adicionar Convidado</h3>
+            <button onclick="closeGuestModal()" class="text-slate-500 hover:text-white transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form id="form-guest" onsubmit="handleQuickAddGuest(event)" class="p-6 flex flex-col gap-4">
+            <div>
+                <label class="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-2">Nome do
+                    Convidado</label>
+                <input type="text" id="guest-name" required placeholder="Ex: João (Amigo do Pedro)"
+                    class="w-full bg-background-dark border border-slate-700 text-white px-4 py-3 focus:border-primary focus:outline-none transition-colors">
+            </div>
+
+            <div>
+                <label class="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-2">Posição
+                    Preferida</label>
+                <select id="guest-pos"
+                    class="w-full bg-background-dark border border-slate-700 text-white px-4 py-3 focus:border-primary focus:outline-none transition-colors appearance-none">
+                    <option value="AT">Avançado (AT)</option>
+                    <option value="MED">Médio (MED)</option>
+                    <option value="DC">Defesa Central (DC)</option>
+                    <option value="LD">Lateral Direito (LD)</option>
+                    <option value="LE">Lateral Esquerdo (LE)</option>
+                    <option value="GR">Guarda-Redes (GR)</option>
+                </select>
+            </div>
+
+            <div class="mt-4 flex gap-4">
+                <button type="button" onclick="closeGuestModal()"
+                    class="flex-1 border border-slate-700 text-slate-400 py-3 text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-colors">Cancelar</button>
+                <button type="submit"
+                    class="flex-1 bg-primary text-background-dark py-3 text-xs font-bold uppercase tracking-widest hover:bg-white transition-colors shadow-hard">Adicionar
+                    ao Jogo</button>
+            </div>
+        </form>
+    </div>
+</div>

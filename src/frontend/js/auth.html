@@ -1,0 +1,72 @@
+<script>
+
+    // ==========================================
+    // AUTHENTICATION CONTROLLER
+    // ==========================================
+
+    // Global state to track if the user is an admin
+    window.APP_STATE = { isAdmin: false };
+    const modalAdmin = document.getElementById('modal-admin-login');
+
+    window.openAdminModal = () => {
+        // If already logged in, maybe ask to logout?
+        if (window.APP_STATE.isAdmin) {
+            if (confirm('Deseja terminar a sessão de Administrador?')) {
+                window.APP_STATE.isAdmin = false;
+                updateAdminUI();
+            }
+            return;
+        }
+        document.getElementById('admin-pin').value = '';
+        document.getElementById('admin-error').classList.add('hidden');
+        modalAdmin.classList.remove('hidden');
+        document.getElementById('admin-pin').focus();
+    };
+
+    window.closeAdminModal = () => {
+        modalAdmin.classList.add('hidden');
+    };
+
+    window.handleAdminLogin = (e) => {
+        e.preventDefault();
+
+        const pinInput = document.getElementById('admin-pin').value;
+        const btnLogin = document.getElementById('btn-login');
+        const errorMsg = document.getElementById('admin-error');
+
+        btnLogin.disabled = true;
+        btnLogin.innerText = 'A verificar...';
+
+        // Call the backend to verify the PIN securely
+        google.script.run
+            .withSuccessHandler((isValid) => {
+                if (isValid) {
+                    window.APP_STATE.isAdmin = true;
+                    closeAdminModal();
+                    updateAdminUI();
+                } else {
+                    errorMsg.classList.remove('hidden');
+                }
+                btnLogin.disabled = false;
+                btnLogin.innerText = 'Desbloquear';
+            })
+            .withFailureHandler(() => {
+                alert('Erro de comunicação. Tente novamente.');
+                btnLogin.disabled = false;
+                btnLogin.innerText = 'Desbloquear';
+            })
+            .apiVerifyPin(pinInput);
+    };
+
+    // The magic function that reveals the buttons
+    window.updateAdminUI = () => {
+        const adminElements = document.querySelectorAll('.admin-only');
+        adminElements.forEach(el => {
+            if (window.APP_STATE.isAdmin) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        });
+    };
+</script>

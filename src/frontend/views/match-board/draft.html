@@ -1,0 +1,37 @@
+<div id="view-draft-container" class="hidden flex-col gap-6">
+
+    <div class="flex justify-between items-center mb-2 px-2">
+        <button onclick="window.revertToSort()"
+            class="admin-only text-slate-500 hover:text-yellow-500 transition-colors flex items-center gap-1 text-xs uppercase tracking-widest font-bold">
+            <span class="material-symbols-outlined text-[14px]">undo</span> Voltar à Lista
+        </button>
+        <button onclick="window.reDraft()"
+            class="admin-only text-slate-500 hover:text-white transition-colors flex items-center gap-1 text-xs uppercase tracking-widest font-bold">
+            <span class="material-symbols-outlined text-[14px]">refresh</span> Refazer Sorteio
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="bg-surface border-t-4 border-red-600 shadow-lg flex flex-col min-h-[500px]">
+            <div class="bg-background-dark/50 p-6 border-b border-slate-800 flex justify-between items-center">
+                <div>
+                    <h3 class="text-red-500 font-display tracking-widest text-2xl uppercase">Equipa Vermelha</h3>
+                    <p class="text-slate-500 text-xs font-bold tracking-widest uppercase mt-1">Rating: <span
+                            id="avg-rating-a" class="text-white">0%</span></p>
+                </div>
+            </div>
+            <div id="list-team-a" class="p-4 flex flex-col gap-2"></div>
+        </div>
+
+        <div class="bg-surface border-t-4 border-purple-600 shadow-lg flex flex-col min-h-[500px]">
+            <div class="bg-background-dark/50 p-6 border-b border-slate-800 flex justify-between items-center">
+                <div>
+                    <h3 class="text-purple-500 font-display tracking-widest text-2xl uppercase">Equipa Roxa</h3>
+                    <p class="text-slate-500 text-xs font-bold tracking-widest uppercase mt-1">Rating: <span
+                            id="avg-rating-b" class="text-white">0%</span></p>
+                </div>
+            </div>
+            <div id="list-team-b" class="p-4 flex flex-col gap-2"></div>
+        </div>
+    </div>
+</div>

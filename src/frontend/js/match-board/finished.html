@@ -1,0 +1,143 @@
+<script>
+    window.renderFinishedView = () => {
+        const match = window.currentActiveMatch;
+        const allPlayers = window.APP_DATA.players || [];
+        if (!match) return;
+
+        // 1. Render Final Score
+        document.getElementById('final-score-a').innerText = match.score?.teamA || 0;
+        document.getElementById('final-score-b').innerText = match.score?.teamB || 0;
+
+        // 2. Render Team Summaries
+        const teamA = match.participants.filter(p => p.team === 'A');
+        const teamB = match.participants.filter(p => p.team === 'B');
+
+        const createMiniRow = (p) => {
+            const info = allPlayers.find(pl => pl.id === p.playerId) || { name: 'Desconhecido' };
+            return `<div class="text-slate-300 text-xs py-1 border-b border-slate-800/50 last:border-0">${info.name}</div>`;
+        };
+
+        document.getElementById('finished-team-a').innerHTML = teamA.map(createMiniRow).join('') || '<span class="text-xs text-slate-600">Sem jogadores</span>';
+        document.getElementById('finished-team-b').innerHTML = teamB.map(createMiniRow).join('') || '<span class="text-xs text-slate-600">Sem jogadores</span>';
+
+        // 3. Render Event Log
+        const logContainer = document.getElementById('finished-events-log');
+        const isAdmin = window.APP_STATE && window.APP_STATE.isAdmin === true;
+
+        let logHtml = '';
+
+        // Sort events chronologically (newest at the bottom)
+        const sortedEvents = [...(match.events || [])].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        if (sortedEvents.length === 0) {
+            logHtml = '<p class="text-slate-500 text-sm text-center italic mt-10">Nenhum evento registado nesta partida.</p>';
+        } else {
+            sortedEvents.forEach(ev => {
+                const player = allPlayers.find(pl => pl.id === ev.playerId) || { name: 'Desconhecido' };
+                const time = new Date(ev.timestamp).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+
+                let actionText = '';
+                let icon = '';
+                let colorClass = 'text-slate-400';
+
+                if (ev.type === 'GOAL') { actionText = 'marcou um Golo'; icon = 'sports_soccer'; colorClass = 'text-green-400'; }
+                else if (ev.type === 'GOALP') { actionText = 'marcou de Penálti'; icon = 'sports_score'; colorClass = 'text-green-400'; }
+                else if (ev.type === 'ASSIST') { actionText = 'fez uma Assistência'; icon = 'handshake'; colorClass = 'text-blue-400'; }
+                else if (ev.type === 'EXPULSION') { actionText = 'foi Expulso'; icon = 'style'; colorClass = 'text-red-500'; }
+                else if (ev.type === 'SUBSTITUTION') {
+                    const subIn = allPlayers.find(pl => pl.id === ev.playerIn) || { name: 'Desconhecido' };
+                    const subOut = allPlayers.find(pl => pl.id === ev.playerOut) || { name: 'Desconhecido' };
+                    actionText = `entrou para o lugar de ${subOut.name}`;
+                    player.name = subIn.name; // Override name for display
+                    icon = 'swap_horiz';
+                    colorClass = 'text-yellow-500';
+                }
+
+                const teamColor = ev.team === 'A' ? 'text-red-500' : (ev.team === 'B' ? 'text-purple-500' : 'text-slate-500');
+                const deleteBtn = isAdmin ? `
+                    <button onclick="window.deleteRetroactiveEvent('${ev.id}')" class="text-slate-600 hover:text-red-500 transition-colors ml-4" title="Apagar Evento">
+                        <span class="material-symbols-outlined text-sm">delete</span>
+                    </button>
+                ` : '';
+
+                logHtml += `
+                    <div class="flex items-center justify-between bg-background-dark/50 border border-slate-800 p-3 rounded">
+                        <div class="flex items-center gap-3">
+                            <span class="text-[10px] text-slate-500 font-mono">${time}</span>
+                            <span class="material-symbols-outlined text-[16px] ${colorClass}">${icon}</span>
+                            <span class="text-sm text-white"><strong class="${teamColor}">${player.name}</strong> ${actionText}</span>
+                        </div>
+                        ${deleteBtn}
+                    </div>
+                `;
+            });
+        }
+        logContainer.innerHTML = logHtml;
+
+        // 4. Populate Retroactive Select Dropdown (Admins only)
+        if (isAdmin) {
+            const selectEl = document.getElementById('retro-player');
+            if (selectEl) {
+                const playingParticipants = match.participants.filter(p => p.team === 'A' || p.team === 'B');
+                let optionsHtml = '';
+                playingParticipants.forEach(p => {
+                    const info = allPlayers.find(pl => pl.id === p.playerId) || { name: 'Desconhecido' };
+                    const teamLabel = p.team === 'A' ? '(Vermelha)' : '(Roxa)';
+                    optionsHtml += `<option value="${p.playerId}" data-team="${p.team}">${info.name} ${teamLabel}</option>`;
+                });
+                selectEl.innerHTML = optionsHtml;
+            }
+        }
+    };
+
+    // --- RECALCULATE SCORE FUNCTION ---
+    // Mathematically calculates score from the ground up to guarantee integrity
+    window.recalculateMatchScore = () => {
+        const match = window.currentActiveMatch;
+        let scoreA = 0;
+        let scoreB = 0;
+
+        match.events.forEach(ev => {
+            if (ev.type === 'GOAL' || ev.type === 'GOALP') {
+                if (ev.team === 'A') scoreA++;
+                if (ev.team === 'B') scoreB++;
+            }
+        });
+
+        match.score = { teamA: scoreA, teamB: scoreB };
+    };
+
+    // --- RETROACTIVE ACTIONS ---
+    window.addRetroactiveEvent = () => {
+        const match = window.currentActiveMatch;
+        const playerSelect = document.getElementById('retro-player');
+        const eventSelect = document.getElementById('retro-event');
+
+        const playerId = playerSelect.value;
+        const eventType = eventSelect.value;
+        const team = playerSelect.options[playerSelect.selectedIndex].getAttribute('data-team');
+
+        match.events.push({
+            id: 'ev_retro_' + Date.now(),
+            type: eventType,
+            team: team,
+            playerId: playerId,
+            timestamp: new Date().toISOString()
+        });
+
+        window.recalculateMatchScore();
+        window.renderFinishedView();
+        google.script.run.apiSaveMatch(match);
+    };
+
+    window.deleteRetroactiveEvent = (eventId) => {
+        if (!confirm('Tem a certeza que deseja apagar este evento? O resultado será recalculado automaticamente.')) return;
+
+        const match = window.currentActiveMatch;
+        match.events = match.events.filter(ev => ev.id !== eventId);
+
+        window.recalculateMatchScore();
+        window.renderFinishedView();
+        google.script.run.apiSaveMatch(match);
+    };
+</script>

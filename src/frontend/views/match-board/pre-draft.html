@@ -1,0 +1,26 @@
+<div id="view-pre-draft" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="bg-surface border border-slate-800 flex flex-col h-[650px]">
+        <div class="bg-background-dark border-b border-slate-800 px-6 py-3 flex justify-between items-center">
+            <h3 class="text-white font-display tracking-wider text-lg uppercase">Plantel</h3>
+            <span id="count-roster" class="text-slate-500 font-bold text-sm">0</span>
+        </div>
+        <div id="list-available" class="flex-1 overflow-y-auto p-4 flex flex-col gap-2"></div>
+        <div class="p-4 border-t border-slate-800">
+            <button onclick="openGuestModal()"
+                class="admin-only w-full bg-background-dark border border-slate-700 text-slate-400 py-2 text-xs font-bold uppercase tracking-widest hover:text-white transition-colors">
+                + Novo Convidado
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-surface border border-primary/30 flex flex-col h-[650px] shadow-lg">
+        <div class="bg-background-dark border-b border-slate-800 px-6 py-3 flex justify-between items-center">
+            <h3 class="text-primary font-display tracking-wider text-lg uppercase">Convocados</h3>
+            <div class="flex items-center gap-2">
+                <span id="count-attending" class="text-white font-bold text-lg">0</span>
+                <span class="text-slate-500 font-bold text-xs">/ 18</span>
+            </div>
+        </div>
+        <div id="list-attending" class="flex-1 overflow-y-auto p-4 flex flex-col gap-2"></div>
+    </div>
+</div>

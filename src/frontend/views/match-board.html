@@ -1,0 +1,30 @@
+<div id="view-match-board" class="app-view hidden">
+    <header
+        class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-800 pb-4 gap-4">
+        <div>
+            <button onclick="window.goBackToMatches()"
+                class="text-slate-500 hover:text-white transition-colors flex items-center gap-2 text-xs uppercase tracking-widest font-bold mb-4">
+                <span class="material-symbols-outlined text-sm">arrow_back</span> Voltar
+            </button>
+            <h2 id="board-match-title" class="text-primary text-4xl font-display tracking-wider uppercase">Carregando...
+            </h2>
+            <p id="board-match-subtitle" class="text-slate-400 font-body uppercase text-sm tracking-widest mt-1">--</p>
+        </div>
+
+        <div id="match-header-actions" class="flex gap-4">
+            <button id="btn-run-draft"
+                class="admin-only hidden bg-primary text-background-dark px-6 py-2 font-bold text-sm uppercase tracking-widest hover:bg-white transition-all shadow-hard">
+                Carregando...
+            </button>
+        </div>
+    </header>
+
+    <div id="match-board-content">
+        <?!= include('src/frontend/views/match-board/pre-draft'); ?>
+        <?!= include('src/frontend/views/match-board/sort'); ?>
+        <?!= include('src/frontend/views/match-board/draft'); ?>
+        <?!= include('src/frontend/views/match-board/match-ongoing') ?>
+        <?!= include('src/frontend/views/match-board/finished') ?>
+
+    </div>
+</div>

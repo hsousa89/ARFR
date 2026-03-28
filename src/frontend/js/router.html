@@ -1,0 +1,101 @@
+<script>
+    // ==========================================
+    // CENTRAL ROUTER (router.html)
+    // ==========================================
+
+    // We attach this to 'window' so any file can trigger a route change
+    window.handleRouting = (rawHash) => {
+        // 1. Clean the hash and split out any parameters (like ?id=m_123)
+        const fullHash = rawHash ? rawHash.replace('#', '') : 'dashboard';
+        const [viewName, queryString] = fullHash.split('?');
+
+        let matchId = null;
+        if (queryString && queryString.startsWith('id=')) {
+            matchId = queryString.split('=')[1];
+        }
+
+        // 2. Hide all views
+        document.querySelectorAll('.app-view').forEach(v => {
+            v.classList.add('hidden');
+            v.classList.remove('block');
+        });
+
+        // 3. Show target view based on the viewName
+        const targetViewId = `view-${viewName}`;
+        const targetView = document.getElementById(targetViewId);
+
+        if (targetView) {
+            targetView.classList.remove('hidden');
+            targetView.classList.add('block');
+        } else {
+            // Fallback if URL is weird
+            document.getElementById('view-dashboard').classList.remove('hidden');
+            document.getElementById('view-dashboard').classList.add('block');
+        }
+
+        // 4. Update Sidebar Active States
+        const navLinks = document.querySelectorAll('nav a');
+        navLinks.forEach(link => {
+            const linkHash = link.getAttribute('href').replace('#', '');
+            const icon = link.querySelector('.material-symbols-outlined');
+
+            if (linkHash === viewName) {
+                link.classList.add('bg-primary', 'text-background-dark', 'shadow-hard');
+                link.classList.remove('text-slate-400', 'hover:bg-white/5');
+                if (icon) icon.style.fontVariationSettings = "'FILL' 1";
+            } else {
+                link.classList.remove('bg-primary', 'text-background-dark', 'shadow-hard');
+                link.classList.add('text-slate-400', 'hover:bg-white/5');
+                if (icon) icon.style.fontVariationSettings = "'FILL' 0";
+            }
+        });
+
+        // 5. Trigger View-Specific Logic
+        // This ensures data is loaded BEFORE trying to build the page
+        if (viewName === 'match-board' && matchId) {
+            if (window.APP_DATA && window.initMatchBoard) {
+                window.initMatchBoard(matchId);
+            }
+        } else if (viewName === 'matches') {
+            if (window.APP_DATA && window.renderMatchesList) {
+                window.renderMatchesList();
+            }
+        }
+    };
+
+    // ==========================================
+    // EVENT LISTENERS & INITIALIZATION
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // 1. Handle Sidebar Navigation Clicks
+        const navLinks = document.querySelectorAll('nav a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (!href || !href.startsWith('#')) return;
+
+                e.preventDefault();
+                const cleanHash = href.replace('#', '');
+
+                // Push to GAS History (prevents iframe reload bug)
+                if (window.google && google.script && google.script.history) {
+                    google.script.history.push(null, null, cleanHash);
+                } else {
+                    window.location.hash = cleanHash; // Fallback for local PC testing
+                }
+
+                // Render UI instantly
+                window.handleRouting(cleanHash);
+            });
+        });
+
+        // 2. Browser Back/Forward Buttons (GAS specific)
+        if (window.google && google.script && google.script.history) {
+            google.script.history.setChangeHandler((e) => {
+                const hash = e.location.hash || 'dashboard';
+                window.handleRouting(hash);
+            });
+        }
+    });
+</script>

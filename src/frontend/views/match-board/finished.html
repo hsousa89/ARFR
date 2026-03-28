@@ -1,0 +1,77 @@
+<div id="view-finished" class="app-view hidden flex-col gap-8 w-full">
+
+    <div
+        class="bg-surface border border-slate-800 flex flex-col items-center justify-center p-8 shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 via-slate-800 to-purple-600"></div>
+        <span class="text-slate-500 font-bold uppercase tracking-widest text-xs mb-2">Resultado Final</span>
+
+        <div class="flex items-center gap-8 md:gap-16">
+            <div class="flex flex-col items-center">
+                <span class="text-red-500 font-display text-xl uppercase tracking-widest mb-2">Vermelha</span>
+                <span id="final-score-a" class="text-white font-display text-7xl tabular-nums">0</span>
+            </div>
+
+            <span class="text-slate-700 font-display text-3xl">VS</span>
+
+            <div class="flex flex-col items-center">
+                <span class="text-purple-500 font-display text-xl uppercase tracking-widest mb-2">Roxa</span>
+                <span id="final-score-b" class="text-white font-display text-7xl tabular-nums">0</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <div class="lg:col-span-1 flex flex-col gap-4">
+            <div class="bg-surface border border-slate-800 p-4 shadow-lg">
+                <h3
+                    class="text-red-500 font-display text-sm uppercase tracking-widest mb-3 border-b border-slate-800 pb-2">
+                    Plantel Vermelha</h3>
+                <div id="finished-team-a" class="flex flex-col gap-1"></div>
+            </div>
+            <div class="bg-surface border border-slate-800 p-4 shadow-lg">
+                <h3
+                    class="text-purple-500 font-display text-sm uppercase tracking-widest mb-3 border-b border-slate-800 pb-2">
+                    Plantel Roxa</h3>
+                <div id="finished-team-b" class="flex flex-col gap-1"></div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 bg-surface border border-slate-800 flex flex-col shadow-lg h-[600px]">
+            <div class="bg-background-dark border-b border-slate-800 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-white font-display tracking-wider text-lg uppercase flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">history</span> Registo de Eventos
+                </h3>
+            </div>
+
+            <div
+                class="admin-only p-4 border-b border-slate-800 bg-background-dark/50 flex flex-col md:flex-row gap-2 items-end">
+                <div class="flex-1 w-full">
+                    <label
+                        class="block text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Jogador</label>
+                    <select id="retro-player"
+                        class="w-full bg-surface border border-slate-700 text-white text-sm rounded px-3 py-2 focus:border-primary outline-none">
+                    </select>
+                </div>
+                <div class="flex-1 w-full">
+                    <label
+                        class="block text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Evento</label>
+                    <select id="retro-event"
+                        class="w-full bg-surface border border-slate-700 text-white text-sm rounded px-3 py-2 focus:border-primary outline-none">
+                        <option value="GOAL">Golo</option>
+                        <option value="GOALP">Golo (Penálti)</option>
+                        <option value="ASSIST">Assistência</option>
+                        <option value="EXPULSION">Expulsão</option>
+                    </select>
+                </div>
+                <button onclick="window.addRetroactiveEvent()"
+                    class="bg-slate-700 hover:bg-primary hover:text-background-dark text-white px-4 py-2 rounded text-sm font-bold uppercase tracking-widest transition-all whitespace-nowrap">
+                    + Adicionar
+                </button>
+            </div>
+
+            <div id="finished-events-log" class="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+            </div>
+        </div>
+    </div>
+</div>

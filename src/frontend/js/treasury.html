@@ -1,0 +1,227 @@
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const db = window.APP_DATA;
+        if (!db) return;
+
+        // 1. Pull the real data and the starting bank balance
+        const transactions = db.transactions || [];
+        const initialBalance = parseFloat(db.settings?.initialBalance) || 0;
+
+        const listContainer = document.getElementById('transactions-list');
+        if (!listContainer) return;
+
+        // --- Format Currency Helper ---
+        const formatEur = (value) => {
+            return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
+        };
+
+        // --- Calculate Totals ---
+        let totalIncome = 0;
+        let totalExpense = 0;
+
+        transactions.forEach(t => {
+            // Ensure amount is treated as a number
+            const amount = parseFloat(t.amount) || 0;
+
+            if (t.type === 'INCOME') {
+                totalIncome += amount;
+            } else if (t.type === 'EXPENSE') {
+                totalExpense += amount;
+            }
+            // NOTE: 'MATERIAL DONATION' is intentionally excluded from cash totals!
+        });
+
+        // The current bank adds the initial balance to the net movement
+        const currentBalance = initialBalance + totalIncome - totalExpense;
+
+        // Update the UI Cards
+        document.getElementById('treasury-balance').innerText = formatEur(currentBalance);
+        document.getElementById('treasury-income').innerText = formatEur(totalIncome);
+        document.getElementById('treasury-expense').innerText = formatEur(totalExpense);
+
+        // --- Render List ---
+        if (transactions.length === 0) {
+            listContainer.innerHTML = `
+            <div class="p-8 text-center text-slate-500 font-body">
+                Nenhum movimento registado.
+            </div>`;
+            return;
+        }
+
+        // Sort newest first
+        const sorted = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+        let html = '';
+
+        sorted.forEach(t => {
+            const amount = parseFloat(t.amount) || 0;
+            let amountColor, sign, icon, iconBg;
+
+            // Route styling based on the strict TransactionType typedef
+            if (t.type === 'INCOME') {
+                amountColor = 'text-green-500';
+                sign = '+';
+                icon = 'arrow_upward';
+                iconBg = 'bg-green-500/10 text-green-500';
+            } else if (t.type === 'EXPENSE') {
+                amountColor = 'text-red-500';
+                sign = '-';
+                icon = 'arrow_downward';
+                iconBg = 'bg-red-500/10 text-red-500';
+            } else if (t.type === 'MATERIAL DONATION') {
+                // Distinct styling for material donations (Blue)
+                amountColor = 'text-blue-400';
+                sign = '';
+                icon = 'inventory_2'; // A box/inventory icon
+                iconBg = 'bg-blue-400/10 text-blue-400';
+            } else {
+                // Fallback for corrupt data
+                amountColor = 'text-slate-500';
+                sign = '';
+                icon = 'help_outline';
+                iconBg = 'bg-slate-800 text-slate-500';
+            }
+
+            const dateObj = new Date(t.date);
+            const dateStr = isNaN(dateObj) ? t.date : dateObj.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }).replace('.', '');
+
+            // If it's a material donation, we might want to show "Equipamento" instead of "€ 0.00" 
+            // if amount is 0, but if you attach a monetary value to the donation, it prints it.
+            const displayAmount = (t.type === 'MATERIAL DONATION' && amount === 0)
+                ? '<span class="text-sm uppercase tracking-wider">Material</span>'
+                : `${sign} ${formatEur(amount)}`;
+
+            html += `
+            <div id="tx-row-${t.id}" class="flex items-center justify-between p-4 border-b border-slate-800/50 hover:bg-white/5 transition-colors group">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center ${iconBg}">
+                        <span class="material-symbols-outlined text-xl">${icon}</span>
+                    </div>
+                    <div>
+                        <p class="text-white font-body font-bold text-sm">${t.description || 'Sem Descrição'}</p>
+                        <p class="text-slate-500 text-xs uppercase tracking-widest">${dateStr}</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-6">
+                    <span class="font-display text-xl ${amountColor}">${displayAmount}</span>
+                    
+                    <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                        <button onclick="openTxModal('${t.id}')" class="text-slate-500 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-lg">edit</span>
+                        </button>
+                        <button onclick="handleDeleteTx('${t.id}')" class="text-slate-500 hover:text-red-500 transition-colors">
+                            <span class="material-symbols-outlined text-lg">delete</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        });
+
+        listContainer.innerHTML = html;
+    });
+
+    // ==========================================
+    // TREASURY FRONTEND CONTROLLER (CRUD)
+    // ==========================================
+
+    const modalTx = document.getElementById('modal-transaction');
+    const formTx = document.getElementById('form-transaction');
+    const btnSaveTx = document.getElementById('btn-save-tx');
+
+    // Make functions globally available to the HTML buttons
+    window.openTxModal = (txId = null) => {
+        formTx.reset();
+        document.getElementById('tx-id').value = '';
+        document.getElementById('modal-tx-title').innerText = 'Nova Transação';
+
+        // Set default date to today
+        document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+
+        if (txId) {
+            // Edit Mode: Find the transaction and populate the form
+            const tx = window.APP_DATA.transactions.find(t => t.id === txId);
+            if (tx) {
+                document.getElementById('modal-tx-title').innerText = 'Editar Transação';
+                document.getElementById('tx-id').value = tx.id;
+                document.getElementById('tx-description').value = tx.description;
+                document.getElementById('tx-amount').value = tx.amount;
+                document.getElementById('tx-type').value = tx.type;
+
+                // Format date for HTML input (YYYY-MM-DD)
+                if (tx.date) {
+                    const d = new Date(tx.date);
+                    if (!isNaN(d)) document.getElementById('tx-date').value = d.toISOString().split('T')[0];
+                }
+            }
+        }
+
+        modalTx.classList.remove('hidden');
+    };
+
+    window.closeTxModal = () => {
+        modalTx.classList.add('hidden');
+    };
+
+    window.handleSaveTx = (e) => {
+        e.preventDefault();
+
+        const rawId = document.getElementById('tx-id').value;
+        const isNew = !rawId;
+        const txId = rawId || 't_' + Date.now();
+
+        const txData = {
+            id: txId,
+            description: document.getElementById('tx-description').value,
+            date: document.getElementById('tx-date').value,
+            amount: parseFloat(document.getElementById('tx-amount').value) || 0,
+            type: document.getElementById('tx-type').value
+        };
+
+        // 1. BACKUP
+        const backupTx = JSON.parse(JSON.stringify(window.APP_DATA.transactions));
+
+        // 2. OPTIMISTIC UPDATE
+        if (!window.APP_DATA.transactions) window.APP_DATA.transactions = [];
+        if (isNew) {
+            window.APP_DATA.transactions.push(txData);
+        } else {
+            const index = window.APP_DATA.transactions.findIndex(t => t.id === txId);
+            if (index > -1) window.APP_DATA.transactions[index] = txData;
+        }
+
+        // 3. INSTANT UI FEEDBACK
+        closeTxModal();
+        document.querySelector('a[href="#treasury"]').click();
+
+        // 4. BACKGROUND SAVE
+        google.script.run
+            .withSuccessHandler(() => console.log(`✅ Transaction ${txId} saved silently.`))
+            .withFailureHandler((error) => {
+                window.APP_DATA.transactions = backupTx; // Rollback
+                document.querySelector('a[href="#treasury"]').click(); // Redraw UI
+                alert('Erro de ligação. A transação não foi guardada.');
+            })
+            .apiSaveTransaction(txData);
+    };
+
+    window.handleDeleteTx = (id) => {
+        if (!confirm('Tem a certeza que deseja eliminar este movimento?')) return;
+
+        const backupTx = JSON.parse(JSON.stringify(window.APP_DATA.transactions));
+
+        // Optimistic Delete
+        window.APP_DATA.transactions = window.APP_DATA.transactions.filter(t => t.id !== id);
+        document.querySelector('a[href="#treasury"]').click();
+
+        google.script.run
+            .withSuccessHandler(() => console.log(`✅ Transaction ${id} deleted silently.`))
+            .withFailureHandler((error) => {
+                window.APP_DATA.transactions = backupTx; // Rollback
+                document.querySelector('a[href="#treasury"]').click();
+                alert('Erro de ligação. O movimento não foi eliminado.');
+            })
+            .apiDeleteTransaction(id);
+    };
+
+</script>

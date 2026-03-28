@@ -1,0 +1,137 @@
+<script>
+    window.renderPreDraftColumns = () => {
+        const allPlayers = window.APP_DATA.players || [];
+        const match = window.currentActiveMatch;
+        if (!match) return;
+
+        const attendingParticipants = match.participants || [];
+        const attendingIds = attendingParticipants.map(p => p.playerId);
+
+        let htmlAvailable = '';
+        let htmlAttending = '';
+        const CAPACITY = 18;
+
+        const availablePlayers = allPlayers.filter(pl => !attendingIds.includes(pl.id));
+
+        availablePlayers.sort((a, b) => a.name.localeCompare(b.name)).forEach(player => {
+            htmlAvailable += window.createPlayerRow(player, false);
+        });
+
+        attendingParticipants.forEach((p, index) => {
+            const playerInfo = allPlayers.find(pl => pl.id === p.playerId) || { id: p.playerId, name: 'Convidado', positions: [p.position || 'MED'] };
+            if (index === CAPACITY) {
+                htmlAttending += `
+                    <div class="flex items-center gap-4 my-4">
+                        <div class="flex-1 border-t-2 border-dashed border-red-500/50"></div>
+                        <span class="text-red-500 text-[10px] font-bold uppercase tracking-widest bg-background-dark px-2">Lista de Espera</span>
+                        <div class="flex-1 border-t-2 border-dashed border-red-500/50"></div>
+                    </div>
+                `;
+            }
+            const isWaitlisted = index >= CAPACITY;
+            htmlAttending += window.createPlayerRow(playerInfo, true, isWaitlisted);
+        });
+
+        const listAvailableEl = document.getElementById('list-available');
+        const listAttendingEl = document.getElementById('list-attending');
+        if (listAvailableEl) listAvailableEl.innerHTML = htmlAvailable || '<p class="text-slate-500 text-xs p-4 text-center">Todos convocados.</p>';
+        if (listAttendingEl) listAttendingEl.innerHTML = htmlAttending || '<p class="text-slate-500 text-xs p-4 text-center">Nenhum jogador convocado ainda.</p>';
+
+        const countAttendingEl = document.getElementById('count-attending');
+        const countRosterEl = document.getElementById('count-roster');
+        if (countAttendingEl) {
+            countAttendingEl.innerText = attendingParticipants.length;
+            countAttendingEl.className = attendingParticipants.length > CAPACITY ? 'text-red-500 font-bold text-lg' : 'text-white font-bold text-lg';
+        }
+        if (countRosterEl) countRosterEl.innerText = availablePlayers.length;
+    };
+
+    window.createPlayerRow = (player, isAttending, isWaitlisted = false) => {
+        const isAdmin = window.APP_STATE && window.APP_STATE.isAdmin === true;
+        const bgColor = isWaitlisted ? 'bg-red-950/20' : 'bg-background-dark';
+        const borderColor = isWaitlisted ? 'border-red-900/50' : 'border-slate-800';
+        const pos = (player.positions && player.positions[0]) ? player.positions[0] : 'MED';
+        const cursorStyle = isAdmin ? 'cursor-pointer hover:border-primary/50 group' : 'cursor-default';
+        const clickEvent = isAdmin ? `onclick="window.togglePlayerAttendance('${player.id}')"` : '';
+        const icon = isAttending ? 'remove_circle' : 'add_circle';
+        const iconColor = isAttending ? 'text-red-500/70 hover:text-red-500' : 'text-green-500/70 hover:text-green-500';
+        const iconHtml = isAdmin ? `<span class="material-symbols-outlined ${iconColor} transition-colors text-xl">${icon}</span>` : '';
+
+        return `
+            <div class="flex items-center justify-between ${bgColor} border ${borderColor} p-3 mb-2 transition-all shadow-sm ${cursorStyle}" ${clickEvent}>
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400">${pos}</div>
+                    <span class="text-white font-bold text-sm tracking-wide ${isAdmin ? 'group-hover:text-primary transition-colors' : ''}">${player.name}</span>
+                    ${isWaitlisted ? '<span class="text-[9px] bg-red-500/10 border border-red-500/20 text-red-500 px-1.5 py-0.5 rounded uppercase tracking-widest">Espera</span>' : ''}
+                </div>
+                ${iconHtml}
+            </div>
+        `;
+    };
+
+    window.togglePlayerAttendance = (playerId) => {
+        const isAdmin = window.APP_STATE && window.APP_STATE.isAdmin === true;
+        if (!isAdmin) {
+            alert("Acesso Negado: Apenas o Mister pode alterar as convocatórias.");
+            return;
+        }
+
+        const match = window.currentActiveMatch;
+        const index = match.participants.findIndex(p => p.playerId === playerId);
+
+        if (index > -1) {
+            match.participants.splice(index, 1);
+        } else {
+            const playerDb = window.APP_DATA.players.find(p => p.id === playerId);
+            const defaultPos = (playerDb && playerDb.positions && playerDb.positions.length > 0) ? playerDb.positions[0] : 'MED';
+            match.participants.push({
+                playerId: playerId,
+                isAttending: true,
+                arrivalTime: new Date().toISOString(),
+                firstTeam: false,
+                team: null,
+                position: defaultPos,
+                draft: null
+            });
+        }
+
+        window.renderPreDraftColumns();
+        if (window.google && google.script && google.script.run) {
+            google.script.run.apiSaveMatch(match);
+        }
+    };
+
+    // Guests
+    window.openGuestModal = () => {
+        const isAdmin = window.APP_STATE ? window.APP_STATE.isAdmin : false;
+        if (!isAdmin) return alert("Apenas o Mister pode convocar jogadores.");
+        document.getElementById('form-guest').reset();
+        document.getElementById('modal-guest').classList.remove('hidden');
+    };
+
+    window.closeGuestModal = () => document.getElementById('modal-guest').classList.add('hidden');
+
+    window.handleQuickAddGuest = (e) => {
+        e.preventDefault();
+        const nameInput = document.getElementById('guest-name').value.trim();
+        const posInput = document.getElementById('guest-pos').value;
+        const playerId = 'p_guest_' + Date.now();
+
+        const newGuest = {
+            id: playerId, name: nameInput + ' (C)', email: '', positions: [posInput], status: 'ACTIVE', isGuest: true
+        };
+
+        if (!window.APP_DATA.players) window.APP_DATA.players = [];
+        window.APP_DATA.players.push(newGuest);
+
+        const match = window.currentActiveMatch;
+        match.participants.push({
+            playerId: playerId, isAttending: true, arrivalTime: new Date().toISOString(), firstTeam: false, team: null, position: posInput, draft: null
+        });
+
+        window.closeGuestModal();
+        window.renderPreDraftColumns();
+        google.script.run.apiSaveMatch(match);
+        if (google.script.run.apiSavePlayer) google.script.run.apiSavePlayer(newGuest);
+    };
+</script>
