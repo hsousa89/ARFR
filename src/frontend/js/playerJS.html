@@ -1,0 +1,115 @@
+<script>
+    window.currentViewPlayerId = null;
+
+    // Triggered when clicking a player card in the Roster
+    window.navigateToPlayerDetails = (playerId) => {
+        window.currentViewPlayerId = playerId;
+
+        // Hide all views, show Player Details
+        document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+        document.getElementById('view-player-details').classList.remove('hidden');
+
+        // Render data
+        window.renderPlayerDetailsView(playerId);
+        window.scrollTo(0, 0); // Scroll to top for mobile
+    };
+
+    window.goBackToRoster = () => {
+        window.currentViewPlayerId = null;
+        document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+        document.getElementById('view-roster').classList.remove('hidden');
+        window.renderRoster();
+    };
+
+    window.renderPlayerDetailsView = (playerId) => {
+        const player = window.APP_DATA.players.find(p => p.id === playerId);
+        if (!player) return;
+
+        // 1. HEADER INFO
+        document.getElementById('pd-name').innerText = player.name;
+        document.getElementById('pd-status').innerHTML = !player.removedAt
+            ? '<span class="text-green-500 font-bold flex items-center gap-1"><span
+        class="material-symbols-outlined text-[14px]" > check_circle</span > Ativo no Plantel</span > '
+: '<span class="text-red-500 font-bold flex items-center gap-1"><span
+        class="material-symbols-outlined text-[14px]" > cancel</span > Inativo</span > ';
+
+        // 2. CONTACT INFO
+        document.getElementById('pd-contact').innerText = player.contact || 'N/A';
+        document.getElementById('pd-email').innerText = player.email || 'N/A';
+        document.getElementById('pd-added').innerText = player.addedAt || 'N/A';
+
+        // 3. PHOTO
+        const photoContainer = document.getElementById('pd-photo-container');
+        if (player.photo && player.photo.trim() !== '') {
+            photoContainer.innerHTML = `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover">`;
+        } else {
+            photoContainer.innerHTML = `<span
+    class="text-6xl font-display text-slate-400">${player.name.charAt(0).toUpperCase()}</span>`;
+        }
+
+        // 4. POSITIONS (Using the global color function from Phase 1)
+        const positionsContainer = document.getElementById('pd-positions');
+        positionsContainer.innerHTML = (player.positions || ['MED']).map(pos => {
+            const style = window.getPositionStyle(pos);
+            return `<span
+    class="px-4 py-1.5 text-xs font-bold uppercase tracking-widest border rounded-sm shadow-sm ${style}">${pos}</span>`;
+        }).join('');
+
+        // 5. ATTRIBUTE BADGES
+        const badgesContainer = document.getElementById('pd-badges');
+        let badgesHTML = '';
+        if (player.isAdmin) badgesHTML += `<div
+    class="flex items-center gap-2 text-red-500 bg-red-950/30 p-2 rounded text-[10px] uppercase tracking-widest font-bold">
+    <span class="material-symbols-outlined text-sm">admin_panel_settings</span> Administrador
+</div>`;
+        if (player.isShiftWorker) badgesHTML += `<div
+    class="flex items-center gap-2 text-amber-500 bg-amber-950/30 p-2 rounded text-[10px] uppercase tracking-widest font-bold">
+    <span class="material-symbols-outlined text-sm">schedule</span> Turnos (Prioridade Especial)
+</div>`;
+        if (!player.entersDraft) badgesHTML += `<div
+    class="flex items-center gap-2 text-slate-500 bg-slate-800/50 p-2 rounded text-[10px] uppercase tracking-widest font-bold">
+    <span class="material-symbols-outlined text-sm">block</span> Excluído do Sorteio Auto
+</div>`;
+        badgesContainer.innerHTML = badgesHTML || '<span
+        class="text-slate-600 text-[10px] uppercase tracking-widest text-center block" > Sem atributos especiais de
+    sistema</span > ';
+
+        // 6. DYNAMIC STATS CALCULATION
+        const matches = window.APP_DATA.matches || [];
+        let gamesPlayed = 0;
+        let goals = 0;
+        let assists = 0;
+
+        matches.forEach(m => {
+            // Only count finished games
+            if (m.status === 'FINISHED' || m.status === 'COMPLETED') {
+                const isParticipant = m.participants.some(p => p.playerId === playerId);
+                if (isParticipant) {
+                    gamesPlayed++;
+
+                    // Count events (Goals / Assists)
+                    (m.events || []).forEach(ev => {
+                        if (ev.playerId === playerId) {
+                            if (ev.type === 'GOAL' || ev.type === 'GOALP') goals++;
+                            if (ev.type === 'ASSIST') assists++;
+                        }
+                    });
+                }
+            }
+        });
+
+        document.getElementById('pd-stat-games').innerText = gamesPlayed;
+        document.getElementById('pd-stat-winrate').innerText = window.calculatePlayerWinRatio(playerId);
+        document.getElementById('pd-stat-goals').innerText = goals;
+        document.getElementById('pd-stat-assists').innerText = assists;
+
+        // 7. ADMIN CONTROLS
+        const isAdmin = window.APP_STATE && window.APP_STATE.isAdmin === true;
+        const btnEdit = document.getElementById('pd-btn-edit');
+        if (isAdmin) {
+            btnEdit.classList.remove('hidden');
+        } else {
+            btnEdit.classList.add('hidden');
+        }
+    };
+</script>
