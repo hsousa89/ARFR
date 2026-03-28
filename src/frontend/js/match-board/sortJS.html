@@ -7,49 +7,103 @@
         const allPlayers = window.APP_DATA.players || [];
         const matchesHistory = window.APP_DATA.matches || [];
 
+        // 1. Merge match participant data with global player data
         const fullParticipants = match.participants.map(p => {
             const dbPlayer = allPlayers.find(pl => pl.id === p.playerId) || { entersDraft: true, isShiftWorker: false, positions: [p.position || 'MED'] };
             return { ...p, ...dbPlayer };
         });
 
+        // 2. Prepare Match History Lookups
         const sortedHistory = [...matchesHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
         const pastMatches = sortedHistory.filter(m => m.id !== match.id && m.status !== 'PRE-DRAFT');
+        const pastFinishedMatches = sortedHistory.filter(m => m.id !== match.id && (m.status === 'FINISHED' || m.status === 'COMPLETED'));
         const lastPlayedMatch = pastMatches.length > 0 ? pastMatches[0] : null;
 
+        // Helper to identify pure goalkeepers
+        const isPureGR = (p) => p.positions && p.positions.length === 1 && p.positions[0] === 'GR';
+
+        // 3. Calculate Priorities & Penalties
         fullParticipants.forEach(player => {
             player.hasPriority = false;
+
+            // Non-drafters never have priority
             if (player.entersDraft === false) return;
 
+            // Calculate 3-Match Penalty (Only for non-shift workers)
+            let penaltyApplied = false;
+            if (!player.isShiftWorker && pastFinishedMatches.length >= 3) {
+                const last3 = pastFinishedMatches.slice(0, 3);
+                // Check if they were in the participants array of ANY of the last 3 matches
+                const attendedAny = last3.some(m => m.participants.some(p => p.playerId === player.id || p.playerId === player.playerId));
+                if (!attendedAny) {
+                    penaltyApplied = true;
+                }
+            }
+
+            // If penalty applies, strip priority and exit check
+            if (penaltyApplied) return;
+
+            // Standard Priority Logic
             let matchToEvaluate = null;
             if (player.isShiftWorker) {
-                matchToEvaluate = pastMatches.find(m => m.participants.some(p => p.playerId === player.id && p.isAttending));
+                matchToEvaluate = pastMatches.find(m => m.participants.some(p => p.playerId === player.id || p.playerId === player.playerId));
             } else if (lastPlayedMatch) {
-                const attendedLast = lastPlayedMatch.participants.some(p => p.playerId === player.id && p.isAttending);
+                const attendedLast = lastPlayedMatch.participants.some(p => p.playerId === player.id || p.playerId === player.playerId);
                 if (attendedLast) matchToEvaluate = lastPlayedMatch;
             }
 
             if (matchToEvaluate) {
-                const pRecord = matchToEvaluate.participants.find(p => p.playerId === player.id);
+                const pRecord = matchToEvaluate.participants.find(p => p.playerId === player.id || p.playerId === player.playerId);
                 if (pRecord && (pRecord.earnedPriority === true || pRecord.firstTeam === false)) {
                     player.hasPriority = true;
                 }
             }
         });
 
+        // 4. Split into pools
         const priorityPlayers = fullParticipants.filter(p => p.hasPriority);
         const remainingPlayers = fullParticipants.filter(p => !p.hasPriority);
-        const pureGRs = remainingPlayers.filter(p => p.entersDraft === true && p.positions && p.positions.length === 1 && p.positions[0] === 'GR');
 
-        let regularDraftPool = remainingPlayers.filter(p => p.entersDraft === true && !(p.positions && p.positions.length === 1 && p.positions[0] === 'GR'));
+        const pureGRs = remainingPlayers.filter(p => p.entersDraft !== false && isPureGR(p));
+        let regularDraftPool = remainingPlayers.filter(p => p.entersDraft !== false && !isPureGR(p));
+        const nonDrafters = remainingPlayers.filter(p => p.entersDraft === false);
 
+        // 5. Shuffle the regular draft pool
         for (let i = regularDraftPool.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [regularDraftPool[i], regularDraftPool[j]] = [regularDraftPool[j], regularDraftPool[i]];
         }
 
-        const nonDrafters = remainingPlayers.filter(p => p.entersDraft === false);
-        const finalSorted = [...priorityPlayers, ...pureGRs, ...regularDraftPool, ...nonDrafters];
+        // 6. Define the preferred loading order
+        const candidatesOrder = [...priorityPlayers, ...pureGRs, ...regularDraftPool, ...nonDrafters];
+
+        // 7. Enforce CAPACITY and GK Caps
         const CAPACITY = 18;
+        const firstTeam = [];
+        const bench = [];
+        let gkCount = 0;
+
+        candidatesOrder.forEach(p => {
+            if (isPureGR(p)) {
+                // GK Cap Logic: Max 2 in the first team
+                if (gkCount < 2 && firstTeam.length < CAPACITY) {
+                    firstTeam.push(p);
+                    gkCount++;
+                } else {
+                    bench.push(p);
+                }
+            } else {
+                // Standard Player Logic
+                if (firstTeam.length < CAPACITY) {
+                    firstTeam.push(p);
+                } else {
+                    bench.push(p);
+                }
+            }
+        });
+
+        // 8. Construct Final Participants Array
+        const finalSorted = [...firstTeam, ...bench];
 
         match.participants = finalSorted.map((p, index) => {
             const isFirstTeam = index < CAPACITY;
@@ -61,7 +115,8 @@
                 team: null,
                 position: p.position || (p.positions ? p.positions[0] : 'MED'),
                 draft: null,
-                earnedPriority: !isFirstTeam
+                // FIX: Only grant priority to waitlisted players IF they actually enter the draft
+                earnedPriority: (!isFirstTeam && p.entersDraft !== false)
             };
         });
 
@@ -70,6 +125,7 @@
         google.script.run.apiSaveMatch(match);
     };
 
+    // --- RENDER VIEW LOGIC ---
     window.renderSortView = () => {
         const match = window.currentActiveMatch;
         const allPlayers = window.APP_DATA.players || [];
@@ -80,12 +136,12 @@
         const CAPACITY = 18;
 
         match.participants.forEach((p, index) => {
-            const playerDb = allPlayers.find(pl => pl.id === p.playerId) || { name: 'Desconhecido' };
+            const playerDb = allPlayers.find(pl => pl.id === p.playerId) || { name: 'Desconhecido', entersDraft: true };
             const isWaitlisted = index >= CAPACITY;
 
             if (index === CAPACITY) {
                 html += `
-                    <div class="flex items-center gap-4 my-2">
+                    <div class="flex items-center gap-4 my-2 mt-6">
                         <div class="flex-1 border-t-2 border-dashed border-red-500/50"></div>
                         <span class="text-red-500 text-[10px] font-bold uppercase tracking-widest bg-surface px-2">Linha de Corte (Lista de Espera)</span>
                         <div class="flex-1 border-t-2 border-dashed border-red-500/50"></div>
@@ -93,14 +149,22 @@
                 `;
             }
 
-            const badge = isWaitlisted
-                ? '<span class="text-[9px] bg-red-500/20 text-red-500 px-2 py-1 rounded border border-red-500/30 uppercase tracking-widest">+ Prioridade Ganha</span>'
-                : '<span class="text-[9px] bg-green-500/20 text-green-500 px-2 py-1 rounded border border-green-500/30 uppercase tracking-widest">Plantel Principal</span>';
+            // UI Fix: Show a neutral badge for waitlisted non-drafters
+            let badge = '';
+            if (isWaitlisted) {
+                if (playerDb.entersDraft === false) {
+                    badge = '<span class="text-[9px] bg-slate-500/20 text-slate-500 px-2 py-1 rounded border border-slate-500/30 uppercase tracking-widest">Lista de Espera</span>';
+                } else {
+                    badge = '<span class="text-[9px] bg-red-500/20 text-red-500 px-2 py-1 rounded border border-red-500/30 uppercase tracking-widest">+ Prioridade Ganha</span>';
+                }
+            } else {
+                badge = '<span class="text-[9px] bg-green-500/20 text-green-500 px-2 py-1 rounded border border-green-500/30 uppercase tracking-widest">Plantel Principal</span>';
+            }
 
             html += `
-                <div class="flex items-center justify-between bg-background-dark border ${isWaitlisted ? 'border-red-900/30' : 'border-slate-800'} p-3 rounded">
+                <div class="flex items-center justify-between bg-background-dark border ${isWaitlisted ? 'border-red-900/30' : 'border-slate-800'} p-3 rounded mb-2">
                     <div class="flex items-center gap-4">
-                        <span class="text-slate-500 font-mono text-xs w-4 text-right">${index + 1}.</span>
+                        <span class="text-slate-500 font-mono text-xs w-6 text-right">${index + 1}.</span>
                         <span class="text-white font-bold text-sm">${playerDb.name}</span>
                     </div>
                     ${badge}
