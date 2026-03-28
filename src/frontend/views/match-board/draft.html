@@ -1,19 +1,20 @@
 <div id="view-draft-container" class="hidden flex-col gap-6">
 
-    <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-2 px-2">
+    <div class="flex flex-row justify-between items-center mb-2 px-2 gap-2 overflow-x-auto">
         <button onclick="window.revertToSort()"
-            class="admin-only text-slate-500 hover:text-yellow-500 border border-transparent transition-colors flex items-center gap-1 text-xs uppercase tracking-widest font-bold">
-            <span class="material-symbols-outlined text-[14px]">undo</span> Voltar à Lista
+            class="admin-only text-slate-500 hover:text-yellow-500 bg-surface border border-slate-800 px-3 py-2 rounded transition-colors flex items-center gap-1 text-[10px] md:text-xs uppercase tracking-widest font-bold whitespace-nowrap">
+            <span class="material-symbols-outlined text-[14px]">undo</span> <span class="hidden sm:inline">Voltar</span>
         </button>
 
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
             <button onclick="window.exportDraftToWhatsApp()"
-                class="text-green-500 hover:text-green-400 border border-transparent transition-colors flex items-center gap-1 text-xs uppercase tracking-widest font-bold">
+                class="text-green-500 hover:text-green-400 bg-surface border border-slate-800 px-3 py-2 rounded transition-colors flex items-center gap-1 text-[10px] md:text-xs uppercase tracking-widest font-bold whitespace-nowrap">
                 <span class="material-symbols-outlined text-[14px]">share</span> WhatsApp
             </button>
             <button onclick="window.reDraft()"
-                class="admin-only text-slate-500 hover:text-white border border-transparent transition-colors flex items-center gap-1 text-xs uppercase tracking-widest font-bold">
-                <span class="material-symbols-outlined text-[14px]">refresh</span> Refazer Sorteio
+                class="admin-only text-slate-300 hover:text-white bg-surface border border-slate-800 px-3 py-2 rounded transition-colors flex items-center gap-1 text-[10px] md:text-xs uppercase tracking-widest font-bold whitespace-nowrap">
+                <span class="material-symbols-outlined text-[14px]">refresh</span> <span
+                    class="hidden sm:inline">Refazer</span>
             </button>
         </div>
     </div>

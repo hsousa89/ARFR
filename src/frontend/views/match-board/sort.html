@@ -1,25 +1,25 @@
 <div id="view-sort" class="app-view hidden max-w-4xl mx-auto w-full flex-col gap-6">
-    <div class="bg-surface border border-slate-800 p-6 shadow-lg relative">
+    <div class="bg-surface border border-slate-800 p-4 md:p-6 shadow-lg relative">
 
         <div
             class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-slate-800 pb-4">
-            <div>
-                <h3 class="text-white font-display text-lg mb-2 uppercase tracking-widest">Ordem de Entrada</h3>
-                <p class="text-slate-500 text-xs">A lista reflete as prioridades. Os primeiros 18 formam o plantel
-                    principal.</p>
+            <div class="w-full md:w-auto">
+                <h3 class="text-white font-display text-lg mb-1 uppercase tracking-widest">Ordem de Entrada</h3>
+                <p class="text-slate-500 text-[10px] md:text-xs">A lista reflete as prioridades (Top 18 formam o
+                    plantel).</p>
             </div>
 
-            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <div class="flex flex-row items-center gap-2 w-full md:w-auto overflow-x-auto pb-1">
                 <button onclick="window.openSortAddPlayer()"
-                    class="admin-only flex-1 md:flex-none bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-background-dark transition-colors flex justify-center items-center gap-2 text-xs uppercase tracking-widest font-bold px-4 py-2 rounded">
-                    <span class="material-symbols-outlined text-[14px]">person_add</span> Adicionar
+                    class="admin-only flex-1 md:flex-none bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-background-dark transition-colors flex justify-center items-center gap-1 md:gap-2 text-[10px] md:text-xs uppercase tracking-widest font-bold px-3 py-2 rounded whitespace-nowrap">
+                    <span class="material-symbols-outlined text-[14px]">person_add</span> Add
                 </button>
                 <button onclick="window.exportSortToWhatsApp()"
-                    class="text-green-500 hover:text-green-400 border border-transparent transition-colors flex justify-center items-center gap-2 text-xs uppercase tracking-widest font-bold px-4 py-2 rounded">
+                    class="flex-1 md:flex-none text-green-500 hover:text-green-400 border border-slate-800 bg-background-dark transition-colors flex justify-center items-center gap-1 md:gap-2 text-[10px] md:text-xs uppercase tracking-widest font-bold px-3 py-2 rounded whitespace-nowrap">
                     <span class="material-symbols-outlined text-[14px]">share</span> WhatsApp
                 </button>
                 <button onclick="window.revertToPreDraft()"
-                    class="admin-only flex-1 md:flex-none text-slate-500 hover:text-red-500 border border-slate-800 hover:border-red-500/50 transition-colors flex justify-center items-center gap-2 text-xs uppercase tracking-widest font-bold px-4 py-2 rounded">
+                    class="admin-only flex-1 md:flex-none text-slate-500 hover:text-red-500 border border-slate-800 bg-background-dark transition-colors flex justify-center items-center gap-1 md:gap-2 text-[10px] md:text-xs uppercase tracking-widest font-bold px-3 py-2 rounded whitespace-nowrap">
                     <span class="material-symbols-outlined text-[14px]">undo</span> Reabrir
                 </button>
             </div>
@@ -31,7 +31,6 @@
 
 <div id="modal-sort-add-player" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-surface border border-slate-700 shadow-2xl rounded-md w-full max-w-md flex flex-col overflow-hidden">
-
         <div class="flex justify-between items-center bg-background-dark p-4 border-b border-slate-800">
             <h3 class="text-white font-display uppercase tracking-widest text-lg flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary">person_add</span> Adicionar à Lista
@@ -40,16 +39,13 @@
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
-
         <div class="p-4 flex flex-col gap-4">
             <input type="text" id="sort-player-search" oninput="window.filterSortAddPlayer(this.value)"
                 placeholder="Pesquisar por nome..."
                 class="w-full bg-background-dark border border-slate-700 text-white px-4 py-2 rounded focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-all"
                 autocomplete="off">
-
             <div id="sort-player-results" class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
             </div>
-
             <div id="sort-player-guest-prompt"
                 class="hidden mt-2 border-t border-slate-800 pt-4 flex flex-col items-center gap-3">
                 <p class="text-xs text-slate-400 text-center">Nenhum jogador registado encontrado.</p>

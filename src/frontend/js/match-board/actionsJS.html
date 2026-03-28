@@ -58,6 +58,10 @@
         }
     };
 
+    // ==========================================
+    // WHATSAPP EXPORT LOGIC
+    // ==========================================
+
     window.formatMatchDatePT = (dateString) => {
         if (!dateString) return "Data Desconhecida";
         const d = new Date(dateString);
@@ -67,7 +71,6 @@
     };
 
     window.copyAndOpenWhatsApp = (text) => {
-        // We copy it to clipboard so the user has a backup if the wa.me link fails to open the app directly
         navigator.clipboard.writeText(text).then(() => {
             const encodedText = encodeURIComponent(text);
             window.open(`https://wa.me/?text=${encodedText}`, '_blank');
@@ -111,10 +114,8 @@
         const formatTeam = (teamArr, teamName, icon) => {
             let res = `${icon} ${teamName} ${icon}\n`;
 
-            // Standard positional ordering
             const posOrder = { 'GR': 1, 'DEF': 2, 'DC': 2, 'LD': 2, 'LE': 2, 'MED': 3, 'AV': 4, 'AT': 4 };
 
-            // Separate the main squad (firstTeam) from the substitutes
             const starters = teamArr.filter(p => p.firstTeam).sort((a, b) => (posOrder[a.position] || 9) - (posOrder[b.position] || 9));
             const subs = teamArr.filter(p => !p.firstTeam).sort((a, b) => (posOrder[a.position] || 9) - (posOrder[b.position] || 9));
 
