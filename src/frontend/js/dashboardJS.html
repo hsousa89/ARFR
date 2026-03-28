@@ -113,7 +113,7 @@
         const goldenBootStandings = Object.keys(goalCounts)
             .map(id => ({ name: playerMap[id] || 'Desconhecido', value: goalCounts[id] }))
             .sort((a, b) => b.value - a.value)
-            .slice(0, 10);
+            .slice(0, 5);
 
         renderLeaderboard('golden-boot-container', goldenBootStandings, 'Ainda não há golos.', 'text-primary');
 
@@ -121,7 +121,7 @@
         const assistStandings = Object.keys(assistCounts)
             .map(id => ({ name: playerMap[id] || 'Desconhecido', value: assistCounts[id] }))
             .sort((a, b) => b.value - a.value)
-            .slice(0, 3);
+            .slice(0, 5);
 
         renderLeaderboard('assists-container', assistStandings, 'Ainda não há assistências.', 'text-purple-500');
 
@@ -129,7 +129,7 @@
         const regularityStandings = Object.keys(attendanceCounts)
             .map(id => ({ name: playerMap[id] || 'Desconhecido', value: attendanceCounts[id] }))
             .sort((a, b) => b.value - a.value)
-            .slice(0, 3);
+            .slice(0, 5);
 
         renderLeaderboard('regularity-container', regularityStandings, 'Ainda não há jogos finalizados.', 'text-amber-500');
 
