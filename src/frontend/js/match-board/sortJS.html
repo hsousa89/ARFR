@@ -177,4 +177,112 @@
         });
         container.innerHTML = html;
     };
+
+    // ==========================================
+    // LATE ADDITIONS (SORT PHASE LOGIC)
+    // ==========================================
+    window.sortUncalledPlayersCache = [];
+    window.currentSortSearchQuery = "";
+
+    window.openSortAddPlayer = () => {
+        const isAdmin = window.APP_STATE && window.APP_STATE.isAdmin === true;
+        if (!isAdmin) return;
+
+        const allPlayers = window.APP_DATA.players || [];
+        window.sortUncalledPlayersCache = allPlayers.filter(pl => !window.currentActiveMatch.participants.some(p => p.playerId === pl.id));
+
+        document.getElementById('sort-player-search').value = '';
+        window.filterSortAddPlayer('');
+
+        document.getElementById('modal-sort-add-player').classList.remove('hidden');
+        setTimeout(() => document.getElementById('sort-player-search').focus(), 100);
+    };
+
+    window.closeSortAddPlayer = () => {
+        document.getElementById('modal-sort-add-player').classList.add('hidden');
+    };
+
+    window.filterSortAddPlayer = (query) => {
+        window.currentSortSearchQuery = query.trim();
+        const resultsContainer = document.getElementById('sort-player-results');
+        const guestPrompt = document.getElementById('sort-player-guest-prompt');
+
+        const lowerQuery = query.toLowerCase();
+        const filtered = window.sortUncalledPlayersCache.filter(p => p.name.toLowerCase().includes(lowerQuery));
+
+        resultsContainer.innerHTML = filtered.map(p => `
+            <button onclick="window.addSpecificSortPlayer('${p.id}')" class="w-full text-left bg-background-dark/50 hover:bg-slate-800 border border-slate-800 p-3 rounded flex items-center justify-between transition-colors group">
+                <span class="text-white font-bold text-sm group-hover:text-primary transition-colors">${p.name}</span>
+                <span class="text-slate-500 text-[10px] uppercase tracking-widest">ID: ${p.id.substring(0, 6)}...</span>
+            </button>
+        `).join('');
+
+        if (filtered.length === 0 && query.trim() !== '') guestPrompt.classList.remove('hidden');
+        else guestPrompt.classList.add('hidden');
+    };
+
+    window.createGuestSortPlayer = () => {
+        const guestName = window.currentSortSearchQuery + " (C)";
+        const guestId = 'guest_' + Date.now();
+
+        if (!window.APP_DATA.players) window.APP_DATA.players = [];
+        window.APP_DATA.players.push({
+            id: guestId, name: guestName, positions: ['MED'], email: '', isGuest: true, status: 'ACTIVE'
+        });
+        window.addSpecificSortPlayer(guestId);
+    };
+
+    window.addSpecificSortPlayer = (playerId) => {
+        const match = window.currentActiveMatch;
+        const allPlayers = window.APP_DATA.players || [];
+        const playerDb = allPlayers.find(p => p.id === playerId) || { entersDraft: true, isGuest: true };
+
+        const entersDraft = playerDb.entersDraft !== false;
+        const isGuest = playerDb.isGuest || playerId.includes('guest');
+
+        let insertIndex = match.participants.length;
+
+        // INTELLIGENT INSERTION: Jump ahead of non-drafters and guests if you are a regular player
+        if (entersDraft && !isGuest) {
+            const firstPenaltyIdx = match.participants.findIndex(p => {
+                const dbP = allPlayers.find(pl => pl.id === p.playerId) || { entersDraft: true };
+                return dbP.entersDraft === false || dbP.isGuest || p.playerId.includes('guest');
+            });
+
+            if (firstPenaltyIdx !== -1) {
+                insertIndex = firstPenaltyIdx;
+            }
+        }
+
+        const newParticipant = {
+            playerId: playerId,
+            isAttending: true,
+            arrivalTime: new Date().toISOString(),
+            firstTeam: false,
+            team: null,
+            position: playerDb.positions ? playerDb.positions[0] : 'MED',
+            draft: null,
+            earnedPriority: false
+        };
+
+        match.participants.splice(insertIndex, 0, newParticipant);
+
+        // RECALCULATE TOP 18 LINE & PRIORITIES
+        const CAPACITY = 18;
+        match.participants.forEach((p, index) => {
+            const isFirstTeam = index < CAPACITY;
+            p.firstTeam = isFirstTeam;
+
+            const dbP = allPlayers.find(pl => pl.id === p.playerId) || { entersDraft: true };
+            const pEntersDraft = dbP.entersDraft !== false;
+            const pIsGuest = dbP.isGuest || p.playerId.includes('guest');
+
+            // Only earn priority if you are a regular member stuck on the waitlist
+            p.earnedPriority = (!isFirstTeam && pEntersDraft && !pIsGuest);
+        });
+
+        window.renderSortView();
+        window.closeSortAddPlayer();
+        google.script.run.apiSaveMatch(match);
+    };
 </script>
