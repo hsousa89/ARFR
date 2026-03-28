@@ -57,4 +57,83 @@
             }
         }
     };
+
+    window.formatMatchDatePT = (dateString) => {
+        if (!dateString) return "Data Desconhecida";
+        const d = new Date(dateString);
+        const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        return `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} ${d.getFullYear()}`;
+    };
+
+    window.copyAndOpenWhatsApp = (text) => {
+        // We copy it to clipboard so the user has a backup if the wa.me link fails to open the app directly
+        navigator.clipboard.writeText(text).then(() => {
+            const encodedText = encodeURIComponent(text);
+            window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+        }).catch(err => {
+            console.error('Failed to copy', err);
+            const encodedText = encodeURIComponent(text);
+            window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+        });
+    };
+
+    window.exportSortToWhatsApp = () => {
+        const match = window.currentActiveMatch;
+        if (!match) return;
+
+        let text = `⚽ Futebol Rodovia Amigos e Resenha ⚽\n🗓️ ${window.formatMatchDatePT(match.date)}\n\n`;
+
+        match.participants.forEach((p, i) => {
+            const allPlayers = window.APP_DATA.players || [];
+            const playerDb = allPlayers.find(pl => pl.id === p.playerId) || { name: 'Desconhecido' };
+            text += `${i + 1}. ${playerDb.name}\n`;
+        });
+
+        window.copyAndOpenWhatsApp(text);
+    };
+
+    window.exportDraftToWhatsApp = () => {
+        const match = window.currentActiveMatch;
+        if (!match) return;
+
+        let text = `⚽ Futebol Rodovia Amigos e Resenha ⚽\n🗓️ ${window.formatMatchDatePT(match.date)}\n\n`;
+
+        const allPlayers = window.APP_DATA.players || [];
+        const getPlayerName = (p) => {
+            const dbP = allPlayers.find(pl => pl.id === p.playerId);
+            return dbP ? dbP.name : 'Desconhecido';
+        };
+
+        const teamA = match.participants.filter(p => p.team === 'A');
+        const teamB = match.participants.filter(p => p.team === 'B');
+
+        const formatTeam = (teamArr, teamName, icon) => {
+            let res = `${icon} ${teamName} ${icon}\n`;
+
+            // Standard positional ordering
+            const posOrder = { 'GR': 1, 'DEF': 2, 'DC': 2, 'LD': 2, 'LE': 2, 'MED': 3, 'AV': 4, 'AT': 4 };
+
+            // Separate the main squad (firstTeam) from the substitutes
+            const starters = teamArr.filter(p => p.firstTeam).sort((a, b) => (posOrder[a.position] || 9) - (posOrder[b.position] || 9));
+            const subs = teamArr.filter(p => !p.firstTeam).sort((a, b) => (posOrder[a.position] || 9) - (posOrder[b.position] || 9));
+
+            starters.forEach((p, i) => {
+                res += `${i + 1}. ${getPlayerName(p)}\n`;
+            });
+
+            if (subs.length > 0) {
+                res += `Sub\n`;
+                subs.forEach((p, i) => {
+                    res += `${i + 1}. ${getPlayerName(p)}\n`;
+                });
+            }
+            return res + '\n';
+        };
+
+        text += formatTeam(teamA, 'Vermelho', '🔴');
+        text += formatTeam(teamB, 'Roxo', '🟣');
+
+        window.copyAndOpenWhatsApp(text.trim());
+    };
 </script>

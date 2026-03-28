@@ -32,8 +32,13 @@
             <h3 class="text-white font-display uppercase tracking-widest text-lg flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary">person_add</span> Adicionar à Lista
             </h3>
-            <button onclick="window.closeSortAddPlayer()" class="text-slate-500 hover:text-red-500 transition-colors">
-                <span class="material-symbols-outlined">close</span>
+            <button onclick="window.exportSortToWhatsApp()"
+                class="text-green-500 hover:text-green-400 transition-colors flex items-center gap-1 text-xs uppercase tracking-widest font-bold">
+                <span class="material-symbols-outlined text-[14px]">share</span> WhatsApp
+            </button>
+            <button onclick="window.revertToPreDraft()"
+                class="admin-only text-slate-500 hover:text-red-500 transition-colors flex items-center gap-1 text-xs uppercase tracking-widest font-bold">
+                <span class="material-symbols-outlined text-[14px]">undo</span> Reabrir Convocatória
             </button>
         </div>
 
