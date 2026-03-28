@@ -71,14 +71,21 @@
     };
 
     window.copyAndOpenWhatsApp = (text) => {
-        navigator.clipboard.writeText(text).then(() => {
+        // Try to copy to clipboard first
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                const encodedText = encodeURIComponent(text);
+                window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+            }).catch(err => {
+                console.error('Failed to copy', err);
+                const encodedText = encodeURIComponent(text);
+                window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+            });
+        } else {
+            // Fallback if clipboard isn't supported by browser
             const encodedText = encodeURIComponent(text);
             window.open(`https://wa.me/?text=${encodedText}`, '_blank');
-        }).catch(err => {
-            console.error('Failed to copy', err);
-            const encodedText = encodeURIComponent(text);
-            window.open(`https://wa.me/?text=${encodedText}`, '_blank');
-        });
+        }
     };
 
     window.exportSortToWhatsApp = () => {
