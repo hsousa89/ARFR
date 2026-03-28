@@ -37,7 +37,7 @@ function doGet(e) {
   }
 
   return template.evaluate()
-    .setTitle('Sunday League Manager')
+    .setTitle('ARFR')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
