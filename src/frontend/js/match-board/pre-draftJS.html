@@ -1,4 +1,12 @@
 <script>
+    // 1. ADD THIS FILTER STATE
+    window.preDraftSearchQuery = '';
+
+    window.filterPreDraft = (query) => {
+        window.preDraftSearchQuery = query.toLowerCase().trim();
+        window.renderPreDraftColumns();
+    };
+
     window.renderPreDraftColumns = () => {
         const allPlayers = window.APP_DATA.players || [];
         const match = window.currentActiveMatch;
@@ -11,7 +19,12 @@
         let htmlAttending = '';
         const CAPACITY = 18;
 
-        const availablePlayers = allPlayers.filter(pl => !attendingIds.includes(pl.id));
+        let availablePlayers = allPlayers.filter(pl => !attendingIds.includes(pl.id));
+
+        // 2. APPLY THE FILTER HERE
+        if (window.preDraftSearchQuery) {
+            availablePlayers = availablePlayers.filter(p => p.name.toLowerCase().includes(window.preDraftSearchQuery));
+        }
 
         availablePlayers.sort((a, b) => a.name.localeCompare(b.name)).forEach(player => {
             htmlAvailable += window.createPlayerRow(player, false);
