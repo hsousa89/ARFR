@@ -117,6 +117,10 @@
     //};
 
     window.openPlayerModal = (playerId = null) => {
+        if (!window.APP_STATE || !window.APP_STATE.isAdmin) {
+            console.error("Acesso Negado ou APP_STATE indefinido:", window.APP_STATE);
+            return alert("Erro: Sem permissões de Mister ou sessão inválida.");
+        }
         const form = document.getElementById('form-player');
         form.reset();
 
