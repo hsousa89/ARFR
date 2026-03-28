@@ -5,7 +5,7 @@
         <header class="bg-background-dark border-b border-slate-700 px-6 py-4 flex justify-between items-center">
             <h3 id="modal-player-title" class="text-white font-display tracking-wider text-xl uppercase">Perfil do
                 Jogador</h3>
-            <button type="button" onclick="closePlayerModal()"
+            <button type="button" onclick="window.closePlayerModal()"
                 class="text-slate-400 hover:text-white transition-colors">
                 <span class="material-symbols-outlined">close</span>
             </button>
@@ -48,9 +48,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">
-                        Posições (Selecione 1 ou mais)
-                    </label>
+                    <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">Posições
+                        (Selecione 1 ou mais)</label>
                     <div class="grid grid-cols-3 gap-3" id="player-positions-group">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" value="GR"
@@ -60,104 +59,90 @@
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" value="DC"
                                 class="pos-checkbox w-4 h-4 accent-primary bg-background-dark border-slate-700">
-                            <span class="text-xs text-white">
-                                Defesa Central (DC)
-                            </span>
+                            <span class="text-xs text-white">Defesa Central (DC)</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" value="LD"
                                 class="pos-checkbox w-4 h-4 accent-primary bg-background-dark border-slate-700">
-                            <span class="text-xs text-white">
-                                Defesa Direito (LD)
-                            </span>
+                            <span class="text-xs text-white">Defesa Direito (LD)</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" value="LE"
                                 class="pos-checkbox w-4 h-4 accent-primary bg-background-dark border-slate-700">
-                            <span class="text-xs text-white">
-                                Defesa Esquerdo (LE)
-                            </span>
+                            <span class="text-xs text-white">Defesa Esquerdo (LE)</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" value="MEDclass="
+                            <input type="checkbox" value="MED"
                                 class="pos-checkbox w-4 h-4 accent-primary bg-background-dark border-slate-700">
-                            <span class="text-xs text-white">
-                                Médio (MED)
-                            </span>
+                            <span class="text-xs text-white">Médio (MED)</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" value="AT"
                                 class="pos-checkbox w-4 h-4 accent-primary bg-background-dark border-slate-700">
-                            <span class="text-xs text-white">
-                                Ponta de Lança (AT)
-                            </span>
+                            <span class="text-xs text-white">Ponta de Lança (AT)</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" value="AV"
                                 class="pos-checkbox w-4 h-4 accent-primary bg-background-dark border-slate-700">
-                            <span class="text-xs text-white">
-                                Extremo/Avançado (AV)
-                            </span>
+                            <span class="text-xs text-white">Extremo/Avançado (AV)</span>
                         </label>
-                        </select>
                     </div>
                 </div>
+            </div>
+            <hr class="border-slate-800">
 
-                <hr class="border-slate-800">
+            <div class="space-y-3">
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" id="player-enters-draft"
+                        class="w-4 h-4 accent-primary bg-background-dark border-slate-700">
+                    <div class="flex flex-col">
+                        <span class="text-sm text-white font-bold">Entra no Sorteio Automático</span>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest">Calcula prioridades e gera
+                            equipas</span>
+                    </div>
+                </label>
 
-                <div class="space-y-3">
-                    <label class="flex items-center gap-3 cursor-pointer group">
-                        <input type="checkbox" id="player-enters-draft"
-                            class="w-4 h-4 accent-primary bg-background-dark border-slate-700">
-                        <div class="flex flex-col">
-                            <span class="text-sm text-white font-bold">Entra no Sorteio Automático</span>
-                            <span class="text-[10px] text-slate-500 uppercase tracking-widest">Calcula prioridades e
-                                gera
-                                equipas</span>
-                        </div>
-                    </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" id="player-is-shift-worker"
+                        class="w-4 h-4 accent-primary bg-background-dark border-slate-700">
+                    <div class="flex flex-col">
+                        <span class="text-sm text-white font-bold">Trabalhador por Turnos</span>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest">Regras especiais de
+                            assiduidade</span>
+                    </div>
+                </label>
 
-                    <label class="flex items-center gap-3 cursor-pointer group">
-                        <input type="checkbox" id="player-is-shift-worker"
-                            class="w-4 h-4 accent-primary bg-background-dark border-slate-700">
-                        <div class="flex flex-col">
-                            <span class="text-sm text-white font-bold">Trabalhador por Turnos</span>
-                            <span class="text-[10px] text-slate-500 uppercase tracking-widest">Regras especiais de
-                                assiduidade</span>
-                        </div>
-                    </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" id="player-is-admin"
+                        class="w-4 h-4 accent-red-500 bg-background-dark border-slate-700">
+                    <div class="flex flex-col">
+                        <span class="text-sm text-red-500 font-bold">Acesso Mister (Admin)</span>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest">Permite editar jogos e
+                            jogadores</span>
+                    </div>
+                </label>
+            </div>
 
-                    <label class="flex items-center gap-3 cursor-pointer group">
-                        <input type="checkbox" id="player-is-admin"
-                            class="w-4 h-4 accent-red-500 bg-background-dark border-slate-700">
-                        <div class="flex flex-col">
-                            <span class="text-sm text-red-500 font-bold">Acesso Mister (Admin)</span>
-                            <span class="text-[10px] text-slate-500 uppercase tracking-widest">Permite editar jogos e
-                                jogadores</span>
-                        </div>
-                    </label>
-                </div>
+            <hr class="border-slate-800">
 
-                <hr class="border-slate-800">
+            <div>
+                <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Estado no
+                    Plantel</label>
+                <select id="player-status"
+                    class="w-full bg-background-dark border border-slate-700 text-white px-3 py-2 text-sm focus:border-primary focus:outline-none transition-colors rounded">
+                    <option value="ACTIVE">Ativo (Pode ser convocado)</option>
+                    <option value="INACTIVE">Inativo / Removido</option>
+                </select>
+            </div>
 
-                <div>
-                    <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Estado no
-                        Plantel</label>
-                    <select id="player-status"
-                        class="w-full bg-background-dark border border-slate-700 text-white px-3 py-2 text-sm focus:border-primary focus:outline-none transition-colors rounded">
-                        <option value="ACTIVE">Ativo (Pode ser convocado)</option>
-                        <option value="INACTIVE">Inativo / Removido</option>
-                    </select>
-                </div>
-
-                <div class="mt-4 flex justify-end gap-4 pt-4 border-t border-slate-800 sticky bottom-0 bg-surface">
-                    <button type="button" onclick="window.closePlayerModal()"
-                        class="px-6 py-2 text-slate-400 font-bold text-sm uppercase tracking-wider hover:text-white transition-colors">Cancelar</button>
-                    <button type="submit" id="btn-save-player"
-                        class="bg-primary text-background-dark px-6 py-2 font-bold text-sm uppercase tracking-wider hover:bg-white transition-colors shadow-hard">
-                        Guardar
-                    </button>
-                </div>
+            <div class="mt-4 flex justify-end gap-4 pt-4 border-t border-slate-800 sticky bottom-0 bg-surface">
+                <button type="button" onclick="window.closePlayerModal()"
+                    class="px-6 py-2 text-slate-400 font-bold text-sm uppercase tracking-wider hover:text-white transition-colors">Cancelar</button>
+                <button type="submit" id="btn-save-player"
+                    class="bg-primary text-background-dark px-6 py-2 font-bold text-sm uppercase tracking-wider hover:bg-white transition-colors shadow-hard">
+                    Guardar
+                </button>
+            </div>
         </form>
     </div>
 </div>
