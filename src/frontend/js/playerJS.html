@@ -27,11 +27,11 @@
 
         // 1. HEADER INFO
         document.getElementById('pd-name').innerText = player.name;
+
+
         document.getElementById('pd-status').innerHTML = !player.removedAt
-            ? '<span class="text-green-500 font-bold flex items-center gap-1"><span
-        class="material-symbols-outlined text-[14px]" > check_circle</span > Ativo no Plantel</span > '
-: '<span class="text-red-500 font-bold flex items-center gap-1"><span
-        class="material-symbols-outlined text-[14px]" > cancel</span > Inativo</span > ';
+            ? `<span class="text-green-500 font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">check_circle</span> Ativo no Plantel</span>`
+            : `<span class="text-red-500 font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">cancel</span> Inativo</span>`;
 
         // 2. CONTACT INFO
         document.getElementById('pd-contact').innerText = player.contact || 'N/A';
@@ -43,36 +43,25 @@
         if (player.photo && player.photo.trim() !== '') {
             photoContainer.innerHTML = `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover">`;
         } else {
-            photoContainer.innerHTML = `<span
-    class="text-6xl font-display text-slate-400">${player.name.charAt(0).toUpperCase()}</span>`;
+            photoContainer.innerHTML = `<span class="text-6xl font-display text-slate-400">${player.name.charAt(0).toUpperCase()}</span>`;
         }
 
-        // 4. POSITIONS (Using the global color function from Phase 1)
+        // 4. POSITIONS
         const positionsContainer = document.getElementById('pd-positions');
         positionsContainer.innerHTML = (player.positions || ['MED']).map(pos => {
             const style = window.getPositionStyle(pos);
-            return `<span
-    class="px-4 py-1.5 text-xs font-bold uppercase tracking-widest border rounded-sm shadow-sm ${style}">${pos}</span>`;
+            return `<span class="px-4 py-1.5 text-xs font-bold uppercase tracking-widest border rounded-sm shadow-sm ${style}">${pos}</span>`;
         }).join('');
 
         // 5. ATTRIBUTE BADGES
         const badgesContainer = document.getElementById('pd-badges');
         let badgesHTML = '';
-        if (player.isAdmin) badgesHTML += `<div
-    class="flex items-center gap-2 text-red-500 bg-red-950/30 p-2 rounded text-[10px] uppercase tracking-widest font-bold">
-    <span class="material-symbols-outlined text-sm">admin_panel_settings</span> Administrador
-</div>`;
-        if (player.isShiftWorker) badgesHTML += `<div
-    class="flex items-center gap-2 text-amber-500 bg-amber-950/30 p-2 rounded text-[10px] uppercase tracking-widest font-bold">
-    <span class="material-symbols-outlined text-sm">schedule</span> Turnos (Prioridade Especial)
-</div>`;
-        if (!player.entersDraft) badgesHTML += `<div
-    class="flex items-center gap-2 text-slate-500 bg-slate-800/50 p-2 rounded text-[10px] uppercase tracking-widest font-bold">
-    <span class="material-symbols-outlined text-sm">block</span> Excluído do Sorteio Auto
-</div>`;
-        badgesContainer.innerHTML = badgesHTML || '<span
-        class="text-slate-600 text-[10px] uppercase tracking-widest text-center block" > Sem atributos especiais de
-    sistema</span > ';
+        if (player.isAdmin) badgesHTML += `<div class="flex items-center gap-2 text-red-500 bg-red-950/30 p-2 rounded text-[10px] uppercase tracking-widest font-bold"><span class="material-symbols-outlined text-sm">admin_panel_settings</span> Administrador</div>`;
+        if (player.isShiftWorker) badgesHTML += `<div class="flex items-center gap-2 text-amber-500 bg-amber-950/30 p-2 rounded text-[10px] uppercase tracking-widest font-bold"><span class="material-symbols-outlined text-sm">schedule</span> Turnos (Prioridade Especial)</div>`;
+        if (!player.entersDraft) badgesHTML += `<div class="flex items-center gap-2 text-slate-500 bg-slate-800/50 p-2 rounded text-[10px] uppercase tracking-widest font-bold"><span class="material-symbols-outlined text-sm">block</span> Excluído do Sorteio Auto</div>`;
+
+
+        badgesContainer.innerHTML = badgesHTML || `<span class="text-slate-600 text-[10px] uppercase tracking-widest text-center block">Sem atributos especiais de sistema</span>`;
 
         // 6. DYNAMIC STATS CALCULATION
         const matches = window.APP_DATA.matches || [];
