@@ -216,6 +216,9 @@
         document.getElementById('modal-player').classList.add('hidden');
     };
 
-
+    document.addEventListener('DOMContentLoaded', () => {
+        // Render the roster immediately when the app starts
+        window.renderRoster();
+    });
 
 </script>
