@@ -37,7 +37,7 @@
                     });
                 }
 
-                // Count Assists & Goals
+                // Count Assists
                 if (match.events) {
                     match.events.forEach(ev => {
                         if (ev.type === 'ASSIST') {
@@ -52,41 +52,52 @@
         const activePlayers = players.filter(p => !p.removedAt).length;
         const avgGoals = totalMatches > 0 ? (totalGoals / totalMatches).toFixed(1) : 0;
 
-        // 3. Find the Kings!
-        let topAssist = { name: 'N/A', count: 0 };
-        Object.keys(assistCounts).forEach(id => {
-            if (assistCounts[id] > topAssist.count) topAssist = { name: playerMap[id] || 'N/A', count: assistCounts[id] };
-        });
-
-        let topReg = { name: 'N/A', count: 0 };
-        Object.keys(attendanceCounts).forEach(id => {
-            if (attendanceCounts[id] > topReg.count) topReg = { name: playerMap[id] || 'N/A', count: attendanceCounts[id] };
-        });
-
-        // Format Names to fit inside the StatCard seamlessly
-        const formatKingStr = (name, count, label) => {
-            if (name === 'N/A' || count === 0) return `<span class="text-3xl font-display">--</span>`;
-            const parts = name.split(' ');
-            // E.g., "Joaquim S."
-            const shortName = parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1].charAt(0)}.` : parts[0];
-            return `<div class="flex flex-col"><span class="text-2xl lg:text-3xl truncate font-display text-white" title="${name}">${shortName}</span><span class="text-sm font-body text-slate-400 mt-1">${count} ${label}</span></div>`;
-        };
-
-        // Helper to safely update elements by ID
+        // Helper to safely update elements
         const updateEl = (id, val) => {
             const el = document.getElementById(id);
-            if (el) el.innerHTML = val;
+            if (el) el.innerText = val;
         };
 
         updateEl('stat-matches', totalMatches);
         updateEl('stat-goals', totalGoals);
         updateEl('stat-players', activePlayers);
         updateEl('stat-avg', avgGoals);
-        updateEl('stat-assists', formatKingStr(topAssist.name, topAssist.count, 'Assistências'));
-        updateEl('stat-regularity', formatKingStr(topReg.name, topReg.count, 'Jogos'));
 
 
-        // --- BOTA DE OURO (Golden Boot) ---
+        // --- LEADERBOARDS (Tables) ---
+
+        // Helper to render Leaderboard Tables
+        const renderLeaderboard = (containerId, dataArray, emptyMessage, highlightColorClass) => {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            if (dataArray.length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-500 py-6">${emptyMessage}</p>`;
+                return;
+            }
+
+            let tableHTML = `<table class="w-full text-left border-collapse"><tbody>`;
+            dataArray.forEach((player, index) => {
+                const isFirst = index === 0;
+                const bgClass = index % 2 === 0 ? 'bg-surface' : 'bg-[#111111]';
+                const rankColor = isFirst ? highlightColorClass : 'text-slate-500';
+                const nameColor = isFirst ? 'text-white' : 'text-slate-300';
+                const valColor = isFirst ? highlightColorClass : 'text-white';
+
+                tableHTML += `
+                    <tr class="border-b border-slate-800 ${bgClass} hover:bg-white/5 transition-colors">
+                        <td class="py-2.5 px-4 text-center ${rankColor} font-display text-lg w-10">${index + 1}</td>
+                        <td class="py-2.5 px-4 ${nameColor} font-bold text-sm truncate max-w-[150px]">${player.name}</td>
+                        <td class="py-2.5 px-4 text-right font-display text-xl ${valColor}">${player.value}</td>
+                    </tr>
+                `;
+            });
+            tableHTML += `</tbody></table>`;
+            container.innerHTML = tableHTML;
+            container.classList.remove("p-4"); // Remove padding so table spans edge-to-edge
+        };
+
+        // 1. Golden Boot (Goals) - Top 10
         const goalCounts = {};
         matches.forEach(m => {
             if (m.events && (m.status === 'FINISHED' || m.status === 'COMPLETED')) {
@@ -100,36 +111,28 @@
         });
 
         const goldenBootStandings = Object.keys(goalCounts)
-            .map(id => ({ name: playerMap[id] || 'Desconhecido', goals: goalCounts[id] }))
-            .sort((a, b) => b.goals - a.goals)
+            .map(id => ({ name: playerMap[id] || 'Desconhecido', value: goalCounts[id] }))
+            .sort((a, b) => b.value - a.value)
             .slice(0, 10);
 
-        const goldenBootContainer = document.getElementById('golden-boot-container');
-        if (goldenBootContainer) {
-            if (goldenBootStandings.length === 0) {
-                goldenBootContainer.innerHTML = '<p class="text-center text-slate-500 py-8">Ainda não há golos marcados nesta época.</p>';
-            } else {
-                let tableHTML = `<table class="w-full text-left border-collapse"><tbody>`;
-                goldenBootStandings.forEach((player, index) => {
-                    const isFirst = index === 0;
-                    const bgClass = index % 2 === 0 ? 'bg-surface' : 'bg-[#111111]';
-                    const rankColor = isFirst ? 'text-primary' : 'text-slate-500';
-                    const nameColor = isFirst ? 'text-white' : 'text-slate-300';
-                    const goalsColor = isFirst ? 'text-primary' : 'text-white';
+        renderLeaderboard('golden-boot-container', goldenBootStandings, 'Ainda não há golos.', 'text-primary');
 
-                    tableHTML += `
-                    <tr class="border-b border-slate-800 ${bgClass} hover:bg-white/5 transition-colors">
-                        <td class="py-3 px-4 text-center ${rankColor} font-display text-xl w-10">${index + 1}</td>
-                        <td class="py-3 px-4 ${nameColor} font-bold text-sm truncate max-w-[150px]">${player.name}</td>
-                        <td class="py-3 px-4 text-right font-display text-2xl ${goalsColor}">${player.goals}</td>
-                    </tr>
-                `;
-                });
-                tableHTML += `</tbody></table>`;
-                goldenBootContainer.innerHTML = tableHTML;
-                goldenBootContainer.classList.remove("p-5");
-            }
-        }
+        // 2. Assists - Top 3
+        const assistStandings = Object.keys(assistCounts)
+            .map(id => ({ name: playerMap[id] || 'Desconhecido', value: assistCounts[id] }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 3);
+
+        renderLeaderboard('assists-container', assistStandings, 'Ainda não há assistências.', 'text-purple-500');
+
+        // 3. Regularity - Top 3
+        const regularityStandings = Object.keys(attendanceCounts)
+            .map(id => ({ name: playerMap[id] || 'Desconhecido', value: attendanceCounts[id] }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 3);
+
+        renderLeaderboard('regularity-container', regularityStandings, 'Ainda não há jogos finalizados.', 'text-amber-500');
+
 
         // --- CALENDAR: PRÓXIMAS JORNADAS ---
         const upcomingContainer = document.getElementById('upcoming-sundays-container');
@@ -154,7 +157,6 @@
                 const existingMatch = matches.find(m => m.date === dateStr);
 
                 if (existingMatch) {
-                    // Render "View Match" card
                     sundaysHTML += `
                     <div class="flex items-center justify-between p-3 bg-background-dark border border-slate-800 rounded opacity-80">
                         <div class="flex items-center gap-3">
@@ -168,7 +170,6 @@
                     </div>
                 `;
                 } else {
-                    // Render "Quick Create" card
                     sundaysHTML += `
                     <div class="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded">
                         <div class="flex items-center gap-3">
@@ -185,20 +186,16 @@
             }
             upcomingContainer.innerHTML = sundaysHTML;
 
-            // Re-apply Admin Hidden UI Rules for the dynamically injected "+ Criar" buttons
             if (typeof window.updateAdminUI === 'function') window.updateAdminUI();
         }
     });
 
-    // Shortcut helper directly on the Dashboard
     window.quickCreateMatch = (dateStr) => {
         if (!window.APP_STATE || !window.APP_STATE.isAdmin) return alert("Apenas o Mister pode agendar jogos.");
 
-        // Open the standard Match modal...
         if (typeof window.openMatchModal === 'function') {
             window.openMatchModal();
 
-            // ...and instantly override the date field with the chosen Sunday!
             setTimeout(() => {
                 const dateInput = document.getElementById('match-date');
                 if (dateInput) dateInput.value = dateStr;
